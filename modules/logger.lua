@@ -1,5 +1,5 @@
--- Version: 1.02
--- logger.lua - Debug + File Version Viewer (auto-detects from startup.lua)
+-- Version: 1.10
+-- logger.lua - Debug + Version + Auto-Repair Updater
 
 local logger = {}
 
@@ -10,21 +10,22 @@ local MODE = "log" -- or "versions"
 local MON_WIDTH = 0
 local MON_HEIGHT = 0
 
--- Add log entry
+-- === GitHub Repo Config ===
+local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
+local BRANCH = "main"
+
+-- === Logging ===
 function logger.add(msg, color)
     table.insert(LOG, { text = msg, color = color or colors.white })
-    if #LOG > MAX_ENTRIES then
-        table.remove(LOG, 1)
-    end
+    if #LOG > MAX_ENTRIES then table.remove(LOG, 1) end
 end
 
--- Read version from first line of a file
+-- === File Utilities ===
 local function getFileVersion(filename)
     if fs.exists(filename) then
         local file = fs.open(filename, "r")
         local firstLine = file.readLine() or ""
         file.close()
-
         local version = firstLine:match("Version:%s*([%d%.]+)")
         return version or "No version"
     else
@@ -32,7 +33,6 @@ local function getFileVersion(filename)
     end
 end
 
--- Auto-detect tracked files from startup.lua
 local function getTrackedFiles()
     local tracked = {}
     if not fs.exists("startup.lua") then return tracked end
@@ -44,26 +44,47 @@ local function getTrackedFiles()
     for path in contents:gmatch('path%s*=%s*"([^"]+)"') do
         table.insert(tracked, path)
     end
-
     for path in contents:gmatch('"%s*(modules/[^"]+%.lua)"') do
-        if not table.contains(tracked, path) then
-            table.insert(tracked, path)
-        end
+        table.insert(tracked, path)
     end
-
-    -- Add dashboard.lua if not explicitly included
     if not table.concat(tracked, " "):find("dashboard.lua") and fs.exists("dashboard.lua") then
         table.insert(tracked, "dashboard.lua")
     end
-
     return tracked
 end
 
--- Draw top buttons
+-- === GitHub Puller ===
+local function pullFile(path)
+    local url = ("https://raw.githubusercontent.com/%s/%s/%s"):format(REPO, BRANCH, path)
+    local response = http.get(url)
+    if not response then
+        logger.add("[X] Failed to fetch " .. path, colors.red)
+        return
+    end
+
+    local data = response.readAll()
+    response.close()
+
+    if path:find("/") then
+        local dir = path:match("^(.*)/")
+        if dir and not fs.exists(dir) then fs.makeDir(dir) end
+    end
+
+    local file = fs.open(path, "w")
+    file.write(data)
+    file.close()
+    logger.add("[✓] Updated: " .. path, colors.lime)
+end
+
+-- === Button Bar ===
 local function drawButtons(mon)
     mon.setCursorPos(2, 1)
     mon.setTextColor(colors.cyan)
     mon.write("[ Show Versions ]")
+
+    mon.setCursorPos(24, 1)
+    mon.setTextColor(colors.yellow)
+    mon.write("[ 🔄 Update Files ]")
 
     local rightBtn = "[ Show Debug Log ]"
     mon.setCursorPos(MON_WIDTH - #rightBtn - 1, 1)
@@ -73,7 +94,7 @@ local function drawButtons(mon)
     mon.setTextColor(colors.white)
 end
 
--- Draw version list
+-- === UI: Version View ===
 local function drawVersions(mon)
     mon.clear()
     drawButtons(mon)
@@ -95,7 +116,7 @@ local function drawVersions(mon)
     end
 end
 
--- Draw the debug log view
+-- === UI: Debug Log ===
 local function drawLog(mon)
     mon.clear()
     drawButtons(mon)
@@ -112,7 +133,7 @@ local function drawLog(mon)
     mon.setTextColor(colors.white)
 end
 
--- Public: draw the current mode
+-- === Public Draw ===
 function logger.draw(mon)
     MON_WIDTH, MON_HEIGHT = mon.getSize()
     if MODE == "versions" then
@@ -122,11 +143,20 @@ function logger.draw(mon)
     end
 end
 
--- Public: handle monitor touch events
+-- === Button Click Handler ===
 function logger.handleTouch(x, y)
     if y == 1 then
         if x >= 2 and x <= 18 then
             MODE = "versions"
+        elseif x >= 24 and x <= 43 then
+            MODE = "log"
+            logger.add("Updating files...", colors.yellow)
+            local files = getTrackedFiles()
+            for _, file in ipairs(files) do
+                pullFile(file)
+                sleep(0.2) -- Let server breathe
+            end
+            logger.add("Update complete.", colors.lime)
         elseif x >= MON_WIDTH - 19 and x <= MON_WIDTH then
             MODE = "log"
         end
