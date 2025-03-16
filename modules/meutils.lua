@@ -1,49 +1,38 @@
 -- Version: 1.11
--- meutils.lua - Utilities for interacting with the ME system via ME Bridge
+-- meutils.lua - AE2 ME Bridge Utilities
 
-local meutils = {}
 local peripherals = require("modules.peripherals")
 
--- On-demand item lookup from ME system by item name
-function meutils.getItem(itemName)
-    local meBridge = peripherals.getMEBridge()
-    if not meBridge then return nil end
+local meutils = {}
+
+-- Get item map from ME system: name => item table
+function meutils.getItemMap(meBridge)
+    if not meBridge then meBridge = peripherals.getMEBridge() end
+    if not meBridge then return {} end
 
     local success, items = pcall(meBridge.listItems)
-    if not success or not items then return nil end
+    if not success or not items then return {} end
 
+    local map = {}
     for _, item in ipairs(items) do
-        if item.name == itemName then
-            return item
-        end
+        map[item.name] = item
     end
-
-    return nil
+    return map
 end
 
--- Check if a given item is exportable (exists in ME and count > 0)
-function meutils.canExport(itemName)
-    local item = meutils.getItem(itemName)
-    if item and item.count and item.count > 0 then
-        return true, item.count
-    end
-    return false, 0
-end
-
--- Check if a specific item is being crafted
+-- Check if item is currently being crafted
 function meutils.isCrafting(itemName)
     local meBridge = peripherals.getMEBridge()
     if not meBridge then return false end
 
-    local success, tasks = pcall(meBridge.getCraftingCPUs)
+    local success, tasks = pcall(meBridge.getCraftingTasks)
     if not success or not tasks then return false end
 
-    for _, cpu in ipairs(tasks) do
-        if cpu.active and cpu.item and cpu.item.name == itemName then
+    for _, task in ipairs(tasks) do
+        if task.item and task.item.name == itemName then
             return true
         end
     end
-
     return false
 end
 
