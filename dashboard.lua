@@ -1,4 +1,4 @@
--- Version: 1.02
+-- Version: 1.1
 -- dashboard.lua - Combined dashboard for MineColonies + AE2
 
 -- === Modules ===
@@ -77,6 +77,7 @@ end
 local function drawLowerBoxes(mon, citizens, buildings, topRow)
     display.drawBox(mon, 1, topRow, 38, MAIN_HEIGHT, " Colonists ")
     display.drawBox(mon, 39, topRow, MAIN_WIDTH, MAIN_HEIGHT, " Construction ")
+
     display.mPrintRowJustified(mon, topRow - 1, "center",
         "Key:Provided (green)|Scheduled (orange)|Crafting (yellow)|Failed (red)|Skipped (gray)",
         colors.white)
@@ -93,13 +94,13 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     end
 
     for _, b in ipairs(buildings) do
-        local cleanedName = b.name:gsub("^.*building%.", ""):gsub("^.*colonies%.", "")
-        local nameText = cleanedName:sub(1, 14)
-        local statusText = ("(" .. b.status .. ")"):sub(1, MAIN_WIDTH - 40 - #nameText - 2)
-        mon.setCursorPos(40, y2)
-        mon.write(nameText .. " " .. statusText)
-        y2 = y2 + 1
-        if y2 > MAIN_HEIGHT - 1 then break end
+        if not b.built then
+            local line = string.format("%s - %s [%d%%]", b.name, b.target, b.progress or 0)
+            mon.setCursorPos(40, y2)
+            mon.write(line:sub(1, MAIN_WIDTH - 40))
+            y2 = y2 + 1
+            if y2 > MAIN_HEIGHT - 1 then break end
+        end
     end
 end
 
