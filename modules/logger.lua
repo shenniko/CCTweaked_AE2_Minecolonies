@@ -1,7 +1,8 @@
--- Version: 1.21
+-- Version: 1.22
 -- logger.lua - Debug + Per-File Version Viewer + Click-to-Update
 
 local logger = {}
+local config = require("modules.config")
 
 local LOG = {}
 local MAX_ENTRIES = 100
