@@ -23,26 +23,21 @@ function display.printLine(mon, y, text, color)
     mon.write(text)
 end
 
--- Draw a horizontal line with optional fallback
-function display.drawHorizontalLine(mon, y, color)
-    local w, _ = mon.getSize()
-    local success = pcall(function()
-        paintutils.drawLine(1, y, w, y, color or colors.gray)
-    end)
-    if not success then
-        mon.setCursorPos(1, y)
-        mon.setTextColor(color or colors.gray)
-        mon.write(string.rep("-", w))
+-- NEW: Draw table headers from a list of {x, label}
+function display.drawTableHeaders(mon, y, columns)
+    mon.setTextColor(colors.lightGray)
+    for _, col in ipairs(columns) do
+        mon.setCursorPos(col.x, y)
+        mon.write(col.label)
     end
 end
 
--- Optional: For requests, draw column headers
-function display.drawTableHeaders(mon, row, columns)
-    mon.setTextColor(colors.lightGray)
-    for _, col in ipairs(columns) do
-        mon.setCursorPos(col.x, row)
-        mon.write(col.label)
-    end
+-- NEW: Draw horizontal line across screen
+function display.drawHorizontalLine(mon, y)
+    local w = mon.getSize()
+    mon.setCursorPos(1, y)
+    mon.setTextColor(colors.gray)
+    mon.write(string.rep("-", w))
 end
 
 return display
