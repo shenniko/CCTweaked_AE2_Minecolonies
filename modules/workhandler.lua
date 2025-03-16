@@ -9,8 +9,19 @@ local display = require("modules.display")
 local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
 
--- Find colonist job by name
-local function getColonistJob(colonists, name)
+-- Extract colonist name from target string (e.g., "Builder's Hut 2 - C. Asplin")
+local function extractNameFromTarget(target)
+    local words = {}
+    for word in target:gmatch("%S+") do table.insert(words, word) end
+    if #words >= 2 then
+        return words[#words - 1] .. " " .. words[#words]
+    end
+    return target
+end
+
+-- Find job/profession based on colonist name from target
+local function getColonistJobByTarget(colonists, target)
+    local name = extractNameFromTarget(target)
     for _, c in ipairs(colonists or {}) do
         if c.name == name then
             return c.job or "Unknown"
@@ -91,8 +102,7 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
             display.mPrintRowJustified(mon, row, "center", title, colors.lightBlue)
             row = row + 1
             for _, entry in ipairs(list) do
-                -- Add job next to colonist name
-                local job = getColonistJob(colonists, entry.name)
+                local job = getColonistJobByTarget(colonists, entry.target)
                 local nameWithJob = string.format("%s - %s", entry.name, job)
                 local leftText = string.format("%d/%d %s", entry.provided, entry.needed, nameWithJob)
                 local rightText = entry.target
