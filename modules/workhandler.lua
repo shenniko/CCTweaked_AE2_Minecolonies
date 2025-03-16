@@ -1,5 +1,4 @@
--- workhandler.lua
--- Handles colony requests + ME logic, with crash safety + profession display
+-- workhandler.lua - Handles Colony Requests Safely
 
 local workhandler = {}
 
@@ -8,6 +7,7 @@ local colonyUtil = require("modules.colony")
 local display = require("modules.display")
 local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
+local peripherals = require("modules.peripherals")
 
 local function extractNameFromTarget(target)
     local words = {}
@@ -28,12 +28,18 @@ local function getColonistJobByTarget(colonists, target)
     return target
 end
 
-function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight, colonists)
+function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
+    local colonyPeripheral = peripherals.getColonyIntegrator()
+    if not colonyPeripheral then
+        logger.add("[Error] Colony Integrator not found!", colors.red)
+        return
+    end
+
     local builder_list = {}
     local nonbuilder_list = {}
     local equipment_list = {}
 
-    local itemMap = meutils.getItemMap(meBridge)
+    local itemMap = meutils.getItemMap()
     local workRequests = colonyPeripheral.getRequests()
 
     for _, request in ipairs(workRequests) do
@@ -52,13 +58,13 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
                 canExport, _ = meutils.canExport(itemMap, itemName, count)
 
                 if canExport then
-                    provided = meutils.tryExport(meBridge, itemName, count, storageSide)
+                    provided = meutils.tryExport(itemName, count, storageSide)
                     color = colors.lime
                     logger.add("[Provided] " .. count .. " x " .. itemName, colors.lime)
-                elseif meutils.isCrafting(meBridge, itemName) then
+                elseif meutils.isCrafting(itemName) then
                     color = colors.yellow
                     logger.add("[Crafting] " .. itemName, colors.yellow)
-                elseif meutils.startCraft(meBridge, itemName, count) then
+                elseif meutils.startCraft(itemName, count) then
                     color = colors.orange
                     logger.add("[Scheduled] " .. count .. " x " .. itemName, colors.orange)
                 else
@@ -87,8 +93,7 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
             logger.add("[Skipped] Malformed request (missing item name)", colors.red)
         end
 
-        -- 💤 Give server a breather between requests
-        sleep(0.05)
+        sleep(0.05) -- 💤 Give server time
     end
 
     -- === Render Work Request UI ===
