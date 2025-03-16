@@ -7,24 +7,22 @@ local logger = require("modules.logger")
 local colonyUtil = require("modules.colony")
 local meutils = require("modules.meutils")
 local workhandler = require("modules.workhandler")
+local config = require("config")
 
--- === ⚙️ Configuration ===
-local STORAGE_SIDE = "bottom"
-local TIME_BETWEEN_SCANS = 30
-
--- === 🖥️ Peripheral Setup ===
-local monitor_main = peripheral.wrap("monitor_4")
-local monitor_debug = peripheral.wrap("monitor_6")
+local STORAGE_SIDE = config.ME_STORAGE_SIDE
+local TIME_BETWEEN_SCANS = config.TIME_BETWEEN_SCANS
+local monitor_main = peripheral.wrap(config.MONITOR_MAIN)
+local monitor_debug = peripheral.wrap(config.MONITOR_DEBUG)
 local meBridge = peripheral.find("meBridge")
 local colony = peripheral.find("colonyIntegrator")
 
-if not monitor_main then error("monitor_4 not found") end
-if not monitor_debug then error("monitor_6 not found") end
+if not monitor_main then error(config.MONITOR_MAIN .. " not found") end
+if not monitor_debug then error(config.MONITOR_DEBUG .. " not found") end
 if not meBridge then error("ME Bridge not found") end
 if not colony then error("Colony Integrator not found") end
 
-monitor_main.setTextScale(0.5)
-monitor_debug.setTextScale(0.5)
+monitor_main.setTextScale(config.TEXT_SCALE)
+monitor_debug.setTextScale(config.TEXT_SCALE)
 monitor_main.setBackgroundColor(colors.black)
 monitor_debug.setBackgroundColor(colors.black)
 monitor_main.clear()
