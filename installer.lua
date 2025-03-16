@@ -9,10 +9,10 @@ if response then
   f.write(response.readAll())
   f.close()
   response.close()
-  print("[✓] Installed startup.lua")
+  print("Installed startup.lua")
   print("Rebooting to launch dashboard...")
   sleep(2)
   os.reboot()
 else
-  print("[X] Failed to install. Check your repo URL.")
+  print("Failed to install. Check your repo URL.")
 end
