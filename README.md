@@ -1,5 +1,7 @@
 # ME Warehouse Dashboard (CC:Tweaked + Advanced Peripherals)
 
+wget run https://raw.githubusercontent.com/shenniko/CCTweaked_AE2_Minecolonies/main/installer.lua
+
 A multi-monitor, auto-crafting dashboard for ComputerCraft/CC:Tweaked using the ME System and MineColonies integration.
 
 ## 🔧 Features
