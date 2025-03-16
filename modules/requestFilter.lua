@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- requestFilter.lua
 -- Determines whether a colony request should be skipped
 
