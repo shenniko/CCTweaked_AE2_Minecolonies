@@ -1,4 +1,4 @@
--- Version: 1.11
+-- Version: 1.2
 -- workhandler.lua - Handles MineColonies work requests and ME interactions
 
 local meutils = require("modules.meutils")
@@ -17,7 +17,7 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
     -- Get work requests
     local colony = peripheral.find("colonyIntegrator")
     if not colony then
-        logger.log("Colony Integrator not found!", colors.red)
+        logger.add("Colony Integrator not found!", colors.red)
         return
     end
 
@@ -55,27 +55,27 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
                 end)
                 if provided and provided >= needed then
                     displayColor = colors.lime
-                    logger.log("[Provided] " .. needed .. " x " .. itemName, colors.lime)
+                    logger.add("[Provided] " .. needed .. " x " .. itemName, colors.lime)
                 else
                     -- Try crafting
                     if meutils.isCrafting(itemName) then
                         displayColor = colors.yellow
-                        logger.log("[Crafting] " .. itemName, colors.yellow)
+                        logger.add("[Crafting] " .. itemName, colors.yellow)
                     elseif peripheral.call(peripheral.find("meBridge"), "craftItem", { name = itemName, count = needed }) then
                         displayColor = colors.orange
-                        logger.log("[Scheduled] " .. needed .. " x " .. itemName, colors.orange)
+                        logger.add("[Scheduled] " .. needed .. " x " .. itemName, colors.orange)
                     else
                         displayColor = colors.red
-                        logger.log("[Failed] " .. itemName, colors.red)
+                        logger.add("[Failed] " .. itemName, colors.red)
                     end
                 end
             else
                 displayColor = colors.red
-                logger.log("[Missing] " .. itemName, colors.red)
+                logger.add("[Missing] " .. itemName, colors.red)
             end
         else
             displayColor = colors.gray
-            logger.log("[Skipped] " .. req.name .. " [" .. target .. "]", colors.gray)
+            logger.add("[Skipped] " .. req.name .. " [" .. target .. "]", colors.gray)
         end
 
         -- Determine job/profession
