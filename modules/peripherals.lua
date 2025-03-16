@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- peripherals.lua - Safe Peripheral Management Layer
 
 local peripherals = {}
