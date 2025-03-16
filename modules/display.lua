@@ -1,5 +1,5 @@
--- Version: 1.1
--- display.lua - Monitor display utilities
+-- Version: 1.2
+-- display.lua - Monitor display utilities for bordered UI
 
 local display = {}
 
@@ -23,7 +23,7 @@ function display.printLine(mon, y, text, color)
     mon.write(text)
 end
 
--- Draws a titled box with proper spacing and fill
+-- Draws a box with a title, using filled paint-style blocks
 function display.drawTitledBox(mon, x1, y1, x2, y2, title, borderColor, fillColor, titleColor)
     titleColor = titleColor or colors.white
     borderColor = borderColor or colors.gray
@@ -36,14 +36,14 @@ function display.drawTitledBox(mon, x1, y1, x2, y2, title, borderColor, fillColo
         mon.write(string.rep(" ", x2 - x1 - 1))
     end
 
-    -- Draw top/bottom borders
+    -- Top and bottom borders
     mon.setBackgroundColor(borderColor)
     mon.setCursorPos(x1, y1)
     mon.write(string.rep(" ", x2 - x1 + 1))
     mon.setCursorPos(x1, y2)
     mon.write(string.rep(" ", x2 - x1 + 1))
 
-    -- Draw left/right borders
+    -- Left/right borders
     for y = y1 + 1, y2 - 1 do
         mon.setCursorPos(x1, y)
         mon.write(" ")
@@ -51,7 +51,7 @@ function display.drawTitledBox(mon, x1, y1, x2, y2, title, borderColor, fillColo
         mon.write(" ")
     end
 
-    -- Overlay title
+    -- Overlay the title
     local titleX = math.floor((x1 + x2 - #title) / 2)
     mon.setCursorPos(titleX, y1)
     mon.setBackgroundColor(fillColor)
