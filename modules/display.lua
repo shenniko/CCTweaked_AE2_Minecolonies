@@ -1,9 +1,7 @@
 -- Version: 1.2
--- display.lua - Monitor display utilities
+-- display.lua - Display utilities for drawing boxes and text
 
 local display = {}
-
--- === Basic Utilities ===
 
 function display.clear(mon)
     mon.setBackgroundColor(colors.black)
@@ -25,27 +23,27 @@ function display.printLine(mon, y, text, color)
     mon.write(text)
 end
 
--- === Box Drawing ===
-
+-- Draw a titled box with fill color and border
 function display.drawTitledBox(mon, x1, y1, x2, y2, title, borderColor, fillColor, titleColor)
-    borderColor = borderColor or colors.gray
+    titleColor = titleColor or colors.white
+    borderColor = borderColor or colors.lightBlue
     fillColor = fillColor or colors.black
-    titleColor = titleColor or colors.cyan
 
-    -- Fill area
+    -- Fill inside
     for y = y1 + 1, y2 - 1 do
         mon.setCursorPos(x1 + 1, y)
         mon.setBackgroundColor(fillColor)
         mon.write(string.rep(" ", x2 - x1 - 1))
     end
 
-    -- Borders
+    -- Top and bottom border
     mon.setBackgroundColor(borderColor)
     mon.setCursorPos(x1, y1)
     mon.write(string.rep(" ", x2 - x1 + 1))
     mon.setCursorPos(x1, y2)
     mon.write(string.rep(" ", x2 - x1 + 1))
 
+    -- Left and right border
     for y = y1 + 1, y2 - 1 do
         mon.setCursorPos(x1, y)
         mon.write(" ")
@@ -53,19 +51,13 @@ function display.drawTitledBox(mon, x1, y1, x2, y2, title, borderColor, fillColo
         mon.write(" ")
     end
 
-    -- Title background fill
-    mon.setCursorPos(x1 + 1, y1)
-    mon.setBackgroundColor(borderColor)
-    mon.write(string.rep(" ", x2 - x1 - 1))
-
-    -- Title centered
+    -- Title overlay
     local titleX = math.floor((x1 + x2 - #title) / 2)
     mon.setCursorPos(titleX, y1)
-    mon.setBackgroundColor(borderColor)
+    mon.setBackgroundColor(fillColor)
     mon.setTextColor(titleColor)
     mon.write(title)
 
-    -- Reset
     mon.setBackgroundColor(colors.black)
     mon.setTextColor(colors.white)
 end
