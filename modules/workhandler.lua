@@ -9,19 +9,26 @@ local display = require("modules.display")
 local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
 
+-- Find job/profession for a colonist name
+local function getColonistJob(colonists, name)
+    for _, c in ipairs(colonists) do
+        if c.name == name then
+            return c.job or "Unemployed"
+        end
+    end
+    return "Unknown"
+end
+
 -- Main scan and render logic
-function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight)
-    -- Initialize category lists
+function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight, colonists)
     local builder_list = {}
     local nonbuilder_list = {}
     local equipment_list = {}
 
-    -- Build ME item lookup
     local itemMap = meutils.getItemMap(meBridge)
     local workRequests = colonyPeripheral.getRequests()
 
     for _, request in ipairs(workRequests) do
-        -- Defensive nil checks
         if request and request.items and request.items[1] and request.items[1].name then
             local itemName = request.items[1].name
             local target = colonyUtil.extractTargetName(request.target)
@@ -29,12 +36,10 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
             local provided = 0
             local color = colors.blue
 
-            -- Skip if filtered
             if filter.shouldSkip(request) then
                 logger.add("[Skipped] " .. request.name .. " [" .. target .. "]", colors.gray)
                 color = colors.gray
             else
-                -- Try to export from ME
                 local canExport = false
                 canExport, _ = meutils.canExport(itemMap, itemName, count)
 
@@ -54,9 +59,13 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
                 end
             end
 
-            -- Build and categorize entry
+            -- Lookup job/profession of the colonist making the request
+            local job = getColonistJob(colonists, request.name)
+
+            -- Create the request entry
             local entry = {
                 name = request.name,
+                job = job,
                 item = itemName,
                 target = target,
                 needed = count,
@@ -72,7 +81,6 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
                 table.insert(nonbuilder_list, entry)
             end
         else
-            -- Log bad request
             logger.add("[Skipped] Malformed request (missing item name)", colors.red)
         end
     end
@@ -87,9 +95,12 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
             display.mPrintRowJustified(mon, row, "center", title, colors.lightBlue)
             row = row + 1
             for _, entry in ipairs(list) do
-                local text = string.format("%d/%d %s", entry.provided, entry.needed, entry.name)
-                display.mPrintRowJustified(mon, row, "left", text, entry.color)
-                display.mPrintRowJustified(mon, row, "right", entry.target, entry.color)
+                -- Include profession in left column
+                local leftText = string.format("%d/%d %s - %s", entry.provided, entry.needed, entry.name, entry.job)
+                local rightText = entry.target
+
+                display.mPrintRowJustified(mon, row, "left", leftText:sub(1, 40), entry.color)
+                display.mPrintRowJustified(mon, row, "right", rightText:sub(1, 20), entry.color)
                 row = row + 1
                 if row > math.floor(screenHeight / 2) then break end
             end
