@@ -9,13 +9,13 @@ local FILES = {
     { path = "dashboard.lua", target = "dashboard.lua" },
 
     -- Modules
+    { path = "modules/peripherals.lua", target = "modules/peripherals.lua" },
     { path = "modules/display.lua", target = "modules/display.lua" },
     { path = "modules/logger.lua", target = "modules/logger.lua" },
     { path = "modules/colony.lua", target = "modules/colony.lua" },
     { path = "modules/meutils.lua", target = "modules/meutils.lua" },
     { path = "modules/workhandler.lua", target = "modules/workhandler.lua" },
     { path = "modules/requestFilter.lua", target = "modules/requestFilter.lua" },
-    { path = "modules/peripherals.lua", target = "modules/peripherals.lua" },
 
     -- Config
     { path = "modules/config.lua", target = "modules/config.lua" }
