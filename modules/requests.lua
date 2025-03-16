@@ -1,18 +1,16 @@
--- Version: 1.1
--- requests.lua - Display colony requests in tidy columns
+-- Version: 1.3
+-- requests.lua - Display colony requests in tidy right-aligned columns
 
 local display = require("modules.display")
 local colony = require("modules.colony")
 
 local requests = {}
 
--- Utility: Format item name nicely
 local function formatItemName(raw)
     local name = raw:match(":(.+)") or raw
     return name:gsub("_", " ")
 end
 
--- Utility: Parse role + colonist from target string
 local function splitRoleAndName(target)
     if not target or target == "" then return "Unknown", "Unknown" end
     local words = {}
@@ -23,12 +21,12 @@ local function splitRoleAndName(target)
     return job, name
 end
 
--- Main render function
 function requests.drawRequests(mon, colonyPeripheral)
     display.clear(mon)
     display.printHeader(mon, "MineColonies Work Requests")
 
     local list = colony.getWorkRequests(colonyPeripheral)
+    local w, _ = mon.getSize()
     local row = 3
 
     if #list == 0 then
@@ -36,12 +34,25 @@ function requests.drawRequests(mon, colonyPeripheral)
         return
     end
 
-    -- Column headers
+    -- Define column widths
+    local qtyW = 4
+    local jobW = 10
+    local nameW = 22
+    local spacing = 2
+    local itemW = w - (qtyW + jobW + nameW + spacing * 3)
+
+    -- Header
     mon.setTextColor(colors.lightGray)
-    display.printLine(mon, row, "Qty   Item                         Job        Colonist")
+    mon.setCursorPos(2, row)
+    mon.write(string.format("%-" .. qtyW .. "s", "Qty"))
+    mon.setCursorPos(2 + qtyW + spacing, row)
+    mon.write("Item")
+    mon.setCursorPos(w - (jobW + nameW + spacing * 2), row)
+    mon.write(string.format("%-" .. jobW .. "s", "Job"))
+    mon.setCursorPos(w - nameW + 1, row)
+    mon.write("Colonist")
     row = row + 1
 
-    -- Render each request
     for _, req in ipairs(list) do
         local item = req.items[1] and req.items[1].name or "?"
         local count = req.count or 1
@@ -49,8 +60,19 @@ function requests.drawRequests(mon, colonyPeripheral)
         local job, name = splitRoleAndName(rawTarget)
         local niceName = formatItemName(item)
 
-        local line = string.format("%-4dx %-26s %-10s %s", count, niceName, job, name)
-        display.printLine(mon, row, line, colors.yellow)
+        mon.setCursorPos(2, row)
+        mon.setTextColor(colors.yellow)
+        mon.write(string.format("%-" .. qtyW .. "s", count .. "x"))
+
+        mon.setCursorPos(2 + qtyW + spacing, row)
+        mon.write(niceName:sub(1, itemW))
+
+        mon.setCursorPos(w - (jobW + nameW + spacing * 2), row)
+        mon.write(string.format("%-" .. jobW .. "s", job))
+
+        mon.setCursorPos(w - nameW + 1, row)
+        mon.write(name:sub(1, nameW))
+
         row = row + 1
     end
 end
