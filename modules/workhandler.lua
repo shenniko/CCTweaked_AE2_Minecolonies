@@ -11,7 +11,10 @@ local filter = require("modules.requestFilter")
 
 -- Main scan and render logic
 function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight)
-    local builder_list, nonbuilder_list, equipment_list = {}
+    local builder_list = {}
+    local nonbuilder_list = {}
+    local equipment_list = {}
+
 
     -- Build a lookup of current ME system contents
     local itemMap = meutils.getItemMap(meBridge)
