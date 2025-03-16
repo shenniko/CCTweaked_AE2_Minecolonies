@@ -1,15 +1,10 @@
--- Version: 1.3
+-- Version: 1.4
 -- requests.lua - Display colony requests in tidy right-aligned columns
 
 local display = require("modules.display")
 local colony = require("modules.colony")
 
 local requests = {}
-
-local function formatItemName(raw)
-    local name = raw:match(":(.+)") or raw
-    return name:gsub("_", " ")
-end
 
 local function splitRoleAndName(target)
     if not target or target == "" then return "Unknown", "Unknown" end
