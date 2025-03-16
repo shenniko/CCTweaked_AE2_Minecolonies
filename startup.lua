@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- startup.lua - Auto-updater and launcher for ME Dashboard
 
 local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
