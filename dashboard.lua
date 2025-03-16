@@ -78,7 +78,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     display.drawBox(mon, 1, topRow, 38, MAIN_HEIGHT, " Colonists ")
     display.drawBox(mon, 39, topRow, MAIN_WIDTH, MAIN_HEIGHT, " Construction ")
     display.mPrintRowJustified(mon, topRow - 1, "center",
-        "Key: ✔ Provided | ↻ Crafting | ↝ Scheduled | ✖ Failed | ● Skipped",
+        "Key:Provided (green)|Scheduled (orange)|Crafting (yellow)|Failed (red)|Skipped (gray)",
         colors.white)
 
     local y1, y2 = topRow + 1, topRow + 1
