@@ -24,10 +24,10 @@ local function getColonistJobByTarget(colonists, target)
     local name = extractNameFromTarget(target)
     for _, c in ipairs(colonists or {}) do
         if c.name == name then
-            return c.job or "Unknown"
+            return c.job or target
         end
     end
-    return "Unknown"
+    return target -- fallback: show full target string
 end
 
 -- Main scan and render logic
