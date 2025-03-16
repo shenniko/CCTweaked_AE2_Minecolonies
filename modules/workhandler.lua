@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- workhandler.lua - Main logic for scanning colony work requests
 
 local workhandler = {}
