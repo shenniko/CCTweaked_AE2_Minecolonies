@@ -39,22 +39,39 @@ local function displayTimer(mon, t)
     local cycle_color = colors.orange
 
     if now >= 6 and now < 18 then
-        cycle = "day" cycle_color = colors.yellow
+        cycle = "day"
+        cycle_color = colors.yellow
     elseif now >= 18 and now < 19.5 then
-        cycle = "sunset" cycle_color = colors.orange
+        cycle = "sunset"
+        cycle_color = colors.orange
     elseif now >= 19.5 or now < 5 then
-        cycle = "night" cycle_color = colors.red
+        cycle = "night"
+        cycle_color = colors.red
     end
 
-    local timer_color = t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange)
-    display.mPrintRowJustified(mon, 1, "left", string.format("Time: %s [%s]", textutils.formatTime(now, false), cycle), cycle_color)
+    -- Format time strings
+    local timeText = string.format("Time: %s [%s]", textutils.formatTime(now, false), cycle)
+    local remainingText = cycle == "night"
+        and "Remaining: PAUSED"
+        or string.format("Remaining: %ss", t)
 
-    if cycle ~= "night" then
-        display.mPrintRowJustified(mon, 1, "right", string.format("Remaining: %ss", t), timer_color)
-    else
-        display.mPrintRowJustified(mon, 1, "right", "Remaining: PAUSED", colors.red)
-    end
+    -- Pad strings to screen width
+    local width = mon.getSize()
+    timeText = timeText .. string.rep(" ", width - #timeText)
+    remainingText = remainingText .. string.rep(" ", width - #remainingText)
+
+    -- Print both sides using full overwrite
+    mon.setCursorPos(1, 1)
+    mon.setTextColor(cycle_color)
+    mon.write(timeText)
+
+    mon.setCursorPos(width - #remainingText + 1, 1)
+    mon.setTextColor((cycle == "night") and colors.red or (t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange)))
+    mon.write(remainingText)
+
+    mon.setTextColor(colors.white)
 end
+
 
 -- === 🧱 Draw Colonist & Construction Boxes ===
 local function drawLowerBoxes(mon, citizens, buildings, topRow)
