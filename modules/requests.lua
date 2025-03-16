@@ -1,5 +1,5 @@
--- Version: 1.7
--- requests.lua - Display colony requests in a clean table using paintutils + display helpers
+-- Version: 1.8
+-- requests.lua - Display colony requests in a structured box format
 
 local display = require("modules.display")
 local colony = require("modules.colony")
@@ -38,10 +38,12 @@ function requests.drawRequests(mon, colonyPeripheral)
     end
 
     display.clear(mon)
-    display.printHeader(mon, "MineColonies Work Requests")
 
     local w, h = mon.getSize()
-    local row = 3
+    local boxX1, boxY1, boxX2, boxY2 = 1, 1, w, h
+    display.drawFancyBox(mon, boxX1, boxY1, boxX2, boxY2, "MineColonies Work Requests", colors.gray)
+
+    local row = boxY1 + 2
 
     if #list == 0 then
         display.printLine(mon, row, "No active work requests", colors.gray)
@@ -54,21 +56,23 @@ function requests.drawRequests(mon, colonyPeripheral)
     local jobW = 12
     local nameW = w - (qtyW + itemW + jobW + 6)
 
-    local qtyX = 2
+    local qtyX = boxX1 + 2
     local itemX = qtyX + qtyW + 1
     local jobX = itemX + itemW + 1
     local nameX = jobX + jobW + 1
 
     -- Draw headers
-    display.drawTableHeaders(mon, row, {
-        { x = qtyX,  label = "Qty" },
-        { x = itemX, label = "Item" },
-        { x = jobX,  label = "Job" },
-        { x = nameX, label = "Colonist" }
-    })
+    display.printLine(mon, row, "Qty", colors.lightGray)
+    mon.setCursorPos(itemX, row)
+    mon.write("Item")
+    mon.setCursorPos(jobX, row)
+    mon.write("Job")
+    mon.setCursorPos(nameX, row)
+    mon.write("Colonist")
 
     row = row + 1
-    display.drawHorizontalLine(mon, row)
+    mon.setCursorPos(qtyX, row)
+    mon.write(string.rep("─", w - 2))
     row = row + 1
 
     -- Print each request row
@@ -92,7 +96,7 @@ function requests.drawRequests(mon, colonyPeripheral)
         mon.write(name:sub(1, nameW))
 
         row = row + 1
-        if row >= h then break end
+        if row >= h - 1 then break end
     end
 end
 
