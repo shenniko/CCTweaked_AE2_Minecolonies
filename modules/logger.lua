@@ -1,4 +1,4 @@
--- Version: 1.22
+-- Version: 1.22.1
 -- logger.lua - Debug + Per-File Version Viewer + Click-to-Update
 
 local logger = {}
@@ -84,7 +84,7 @@ local function pullFile(path)
     local file = fs.open(path, "w")
     file.write(data)
     file.close()
-    logger.add("[✓] Updated: " .. path, colors.lime)
+    logger.add("Updated: " .. path, colors.lime)
     return true
 end
 
