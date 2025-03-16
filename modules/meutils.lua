@@ -1,9 +1,10 @@
--- meutils.lua (ATM10 / Advanced Peripherals 0.7+)
--- Handles ME system interaction: listing, crafting, exporting
+-- meutils.lua
+-- ME system helper functions (ATM10 / Advanced Peripherals 0.7+)
 
 local meutils = {}
 
--- Builds a lookup table of available items in the ME system
+-- Builds a lookup table of all items currently in the ME system
+-- Format: itemMap[itemName] = { count = number, displayName = string, ... }
 function meutils.getItemMap(meBridge)
     local map = {}
     for _, item in ipairs(meBridge.listItems()) do
@@ -12,28 +13,26 @@ function meutils.getItemMap(meBridge)
     return map
 end
 
--- Checks if an item is currently being crafted
+-- Checks if a given item is currently being crafted
+-- Returns true if in progress, false if not
 function meutils.isCrafting(meBridge, itemName)
-    local tasks = meBridge.getCraftingTasks()
-    for _, task in ipairs(tasks) do
-        if task.item.name == itemName then
-            return true
-        end
-    end
-    return false
+    return meBridge.isItemCrafting({ name = itemName }) or false
 end
 
--- Starts crafting a given item
+-- Tries to start crafting a specific item in a given count
+-- Returns true if the task was scheduled
 function meutils.startCraft(meBridge, itemName, count)
-    return meBridge.craftItem({ name = itemName, count = count or 1 })
+    return meBridge.craftItem({ name = itemName, count = count or 1 }) or false
 end
 
--- Attempts to export an item to a connected inventory
+-- Attempts to export items from ME system to a connected inventory
+-- Returns the number of items actually exported (or 0 if failed)
 function meutils.tryExport(meBridge, itemName, count, toSide)
     return meBridge.exportItem({ name = itemName, count = count or 1 }, toSide) or 0
 end
 
--- Checks whether the item can be exported immediately
+-- Determines if the requested amount of an item is available
+-- Returns: (bool canExport, number availableCount)
 function meutils.canExport(itemMap, itemName, required)
     local entry = itemMap[itemName]
     if entry and entry.count >= required then
