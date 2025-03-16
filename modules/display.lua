@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- display.lua
 -- Utility functions for monitor-based drawing:
 -- centered, left, right text, and border boxes.
