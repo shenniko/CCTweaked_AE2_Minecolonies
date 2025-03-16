@@ -1,4 +1,4 @@
--- Version: 1.0
+-- Version: 1.1
 -- display.lua - Monitor display utilities
 
 local display = {}
@@ -23,4 +23,10 @@ function display.printLine(mon, y, text, color)
     mon.write(text)
 end
 
-return display
+-- Draw a horizontal line with optional fallback
+function display.drawHorizontalLine(mon, y, color)
+    local w, _ = mon.getSize()
+    local success = pcall(function()
+        paintutils.drawLine(1, y, w, y, color or colors.gray)
+    end)
+    if not
