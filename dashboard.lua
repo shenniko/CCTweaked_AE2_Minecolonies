@@ -79,7 +79,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     display.drawBox(mon, 39, topRow, MAIN_WIDTH, MAIN_HEIGHT, " Construction ")
 
     display.mPrintRowJustified(mon, topRow - 1, "center",
-        "Key:Provided (green)|Scheduled (orange)|Crafting (yellow)|Failed (red)|Skipped (gray)",
+        "Key:Provided (green) | Scheduled (orange) | Crafting (yellow) | Failed (red) | Skipped (gray)",
         colors.white)
 
     local y1, y2 = topRow + 1, topRow + 1
@@ -93,15 +93,17 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
         if y1 > MAIN_HEIGHT - 1 then break end
     end
 
-    for _, b in ipairs(buildings) do
-        if not b.built then
-            local line = string.format("%s - %s [%d%%]", b.name, b.target, b.progress or 0)
-            mon.setCursorPos(40, y2)
-            mon.write(line:sub(1, MAIN_WIDTH - 40))
-            y2 = y2 + 1
-            if y2 > MAIN_HEIGHT - 1 then break end
-        end
-    end
+for _, b in ipairs(buildings) do
+    local progress = b.progress or 0
+    local target = (b.target and #b.target > 0) and b.target or "Idle"
+    local line = string.format("%s - %s [%d%%]", b.name, target, progress)
+
+    mon.setCursorPos(40, y2)
+    mon.write(line:sub(1, MAIN_WIDTH - 40))
+    y2 = y2 + 1
+    if y2 > MAIN_HEIGHT - 1 then break end
+end
+
 end
 
 -- === Run a full scan cycle ===
