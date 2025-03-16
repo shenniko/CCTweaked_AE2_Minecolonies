@@ -1,42 +1,45 @@
--- meutils.lua
--- Utility functions for interacting with ME Bridge peripheral
+-- meutils.lua (ATM10 / Advanced Peripherals 0.7+)
+-- Handles ME system interaction: listing, crafting, exporting
 
 local meutils = {}
 
--- Converts ME item list into a lookup table: itemName => item
-function meutils.buildItemLookup(items)
-    local itemMap = {}
-    for _, item in ipairs(items) do
-        itemMap[item.name] = item
+-- Builds a lookup table of available items in the ME system
+function meutils.getItemMap(meBridge)
+    local map = {}
+    for _, item in ipairs(meBridge.listItems()) do
+        map[item.name] = item
     end
-    return itemMap
+    return map
 end
 
--- Determines if the item should be handled via ME auto-crafting
--- Skips tools, food, compost, etc.
-function meutils.shouldUseME(itemName, desc)
-    return not (
-        desc:find("Tool of class") or
-        itemName:match("Hoe|Shovel|Axe|Pickaxe|Bow|Sword|Shield|Helmet|Cap|Chestplate|Tunic|Pants|Leggings|Boots") or
-        itemName:match("Compostable|Fuel|Food|Flowers|Smeltable Ore|Stack List")
-    )
-end
-
--- Attempts to export the item to a connected inventory
--- Returns amount actually exported
-function meutils.exportItem(meBridge, item, count, destination)
-    return meBridge.exportItem({ name = item, count = count }, destination) or 0
-end
-
--- Tries to craft an item if not already being crafted
--- Returns true if successfully started
-function meutils.tryCraft(meBridge, item, count)
-    if meBridge.isItemCrafting({ name = item }) then
-        return false -- Already crafting
-    else
-        return meBridge.craftItem({ name = item, count = count })
+-- Checks if an item is currently being crafted
+function meutils.isCrafting(meBridge, itemName)
+    local tasks = meBridge.getCraftingTasks()
+    for _, task in ipairs(tasks) do
+        if task.item.name == itemName then
+            return true
+        end
     end
+    return false
+end
+
+-- Starts crafting a given item
+function meutils.startCraft(meBridge, itemName, count)
+    return meBridge.craftItem({ name = itemName, count = count or 1 })
+end
+
+-- Attempts to export an item to a connected inventory
+function meutils.tryExport(meBridge, itemName, count, toSide)
+    return meBridge.exportItem({ name = itemName, count = count or 1 }, toSide) or 0
+end
+
+-- Checks whether the item can be exported immediately
+function meutils.canExport(itemMap, itemName, required)
+    local entry = itemMap[itemName]
+    if entry and entry.count >= required then
+        return true, entry.count
+    end
+    return false, entry and entry.count or 0
 end
 
 return meutils
-
