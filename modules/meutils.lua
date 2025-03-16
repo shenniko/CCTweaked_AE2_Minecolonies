@@ -1,64 +1,50 @@
--- Version: 1.0
--- meutils.lua - Crash-safe ME Bridge utility functions
+-- Version: 1.11
+-- meutils.lua - Utilities for interacting with the ME system via ME Bridge
 
 local meutils = {}
 local peripherals = require("modules.peripherals")
 
--- Get item list from ME and build map
-function meutils.getItemMap()
-    local bridge = peripherals.getMEBridge()
-    if not bridge then return {} end
+-- On-demand item lookup from ME system by item name
+function meutils.getItem(itemName)
+    local meBridge = peripherals.getMEBridge()
+    if not meBridge then return nil end
 
-    local success, items = pcall(bridge.listItems)
-    if not success or not items then return {} end
+    local success, items = pcall(meBridge.listItems)
+    if not success or not items then return nil end
 
-    local map = {}
     for _, item in ipairs(items) do
-        map[item.name] = item
+        if item.name == itemName then
+            return item
+        end
     end
-    return map
+
+    return nil
 end
 
--- Check if item is being crafted
+-- Check if a given item is exportable (exists in ME and count > 0)
+function meutils.canExport(itemName)
+    local item = meutils.getItem(itemName)
+    if item and item.count and item.count > 0 then
+        return true, item.count
+    end
+    return false, 0
+end
+
+-- Check if a specific item is being crafted
 function meutils.isCrafting(itemName)
-    local bridge = peripherals.getMEBridge()
-    if not bridge then return false end
+    local meBridge = peripherals.getMEBridge()
+    if not meBridge then return false end
 
-    local ok, result = pcall(function()
-        return bridge.isItemCrafting({ name = itemName })
-    end)
-    return ok and result or false
-end
+    local success, tasks = pcall(meBridge.getCraftingCPUs)
+    if not success or not tasks then return false end
 
--- Start crafting item
-function meutils.startCraft(itemName, count)
-    local bridge = peripherals.getMEBridge()
-    if not bridge then return false end
-
-    local ok, result = pcall(function()
-        return bridge.craftItem({ name = itemName, count = count or 1 })
-    end)
-    return ok and result or false
-end
-
--- Export item to specified side
-function meutils.tryExport(itemName, count, side)
-    local bridge = peripherals.getMEBridge()
-    if not bridge then return 0 end
-
-    local ok, result = pcall(function()
-        return bridge.exportItem({ name = itemName, count = count or 1 }, side)
-    end)
-    return ok and result or 0
-end
-
--- Check if an item exists in ME with required count
-function meutils.canExport(itemMap, itemName, required)
-    local entry = itemMap[itemName]
-    if entry and entry.count >= required then
-        return true, entry.count
+    for _, cpu in ipairs(tasks) do
+        if cpu.active and cpu.item and cpu.item.name == itemName then
+            return true
+        end
     end
-    return false, entry and entry.count or 0
+
+    return false
 end
 
 return meutils
