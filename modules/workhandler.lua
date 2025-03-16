@@ -9,11 +9,11 @@ local display = require("modules.display")
 local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
 
--- Find job/profession for a colonist name
+-- Find colonist job by name
 local function getColonistJob(colonists, name)
-    for _, c in ipairs(colonists) do
+    for _, c in ipairs(colonists or {}) do
         if c.name == name then
-            return c.job or "Unemployed"
+            return c.job or "Unknown"
         end
     end
     return "Unknown"
@@ -59,13 +59,9 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
                 end
             end
 
-            -- Lookup job/profession of the colonist making the request
-            local job = getColonistJob(colonists, request.name)
-
-            -- Create the request entry
+            -- Create entry for rendering
             local entry = {
                 name = request.name,
-                job = job,
                 item = itemName,
                 target = target,
                 needed = count,
@@ -95,8 +91,10 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
             display.mPrintRowJustified(mon, row, "center", title, colors.lightBlue)
             row = row + 1
             for _, entry in ipairs(list) do
-                -- Include profession in left column
-                local leftText = string.format("%d/%d %s - %s", entry.provided, entry.needed, entry.name, entry.job)
+                -- Add job next to colonist name
+                local job = getColonistJob(colonists, entry.name)
+                local nameWithJob = string.format("%s - %s", entry.name, job)
+                local leftText = string.format("%d/%d %s", entry.provided, entry.needed, nameWithJob)
                 local rightText = entry.target
 
                 display.mPrintRowJustified(mon, row, "left", leftText:sub(1, 40), entry.color)
