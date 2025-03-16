@@ -53,28 +53,28 @@ function requests.drawRequests(mon, colonyPeripheral)
     mon.write("Colonist")
     row = row + 1
 
-    for _, req in ipairs(list) do
-        local item = req.items[1] and req.items[1].name or "?"
-        local count = req.count or 1
-        local rawTarget = req.target or "Unknown"
-        local job, name = splitRoleAndName(rawTarget)
-        local niceName = formatItemName(item)
+for _, req in ipairs(list) do
+    local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
+    local count = req.count or 1
+    local rawTarget = req.target or "Unknown"
+    local job, name = splitRoleAndName(rawTarget)
 
-        mon.setCursorPos(2, row)
-        mon.setTextColor(colors.yellow)
-        mon.write(string.format("%-" .. qtyW .. "s", count .. "x"))
+    mon.setCursorPos(2, row)
+    mon.setTextColor(colors.yellow)
+    mon.write(string.format("%-" .. qtyW .. "s", count .. "x"))
 
-        mon.setCursorPos(2 + qtyW + spacing, row)
-        mon.write(niceName:sub(1, itemW))
+    mon.setCursorPos(2 + qtyW + spacing, row)
+    mon.write(item:sub(1, itemW))
 
-        mon.setCursorPos(w - (jobW + nameW + spacing * 2), row)
-        mon.write(string.format("%-" .. jobW .. "s", job))
+    mon.setCursorPos(w - (jobW + nameW + spacing * 2), row)
+    mon.write(string.format("%-" .. jobW .. "s", job))
 
-        mon.setCursorPos(w - nameW + 1, row)
-        mon.write(name:sub(1, nameW))
+    mon.setCursorPos(w - nameW + 1, row)
+    mon.write(name:sub(1, nameW))
 
-        row = row + 1
-    end
+    row = row + 1
+end
+
 end
 
 return requests
