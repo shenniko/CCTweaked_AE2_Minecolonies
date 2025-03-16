@@ -19,6 +19,14 @@ function meutils.getItemMap()
     return {}
 end
 
+function meutils.canExport(itemMap, itemName, required)
+    local entry = itemMap[itemName]
+    if entry and entry.count >= required then
+        return true, entry.count
+    end
+    return false, entry and entry.count or 0
+end
+
 -- Checks if an item is being crafted
 function meutils.isCrafting(itemName)
     local meBridge = peripherals.getMEBridge()
