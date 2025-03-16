@@ -1,5 +1,5 @@
--- Version: 1.01
--- logger.lua - Toggleable debug log and file version viewer
+-- Version: 1.02
+-- logger.lua - Debug + File Version Viewer (auto-detects from startup.lua)
 
 local logger = {}
 
@@ -18,7 +18,7 @@ function logger.add(msg, color)
     end
 end
 
--- Helper: Read version from file
+-- Read version from first line of a file
 local function getFileVersion(filename)
     if fs.exists(filename) then
         local file = fs.open(filename, "r")
@@ -32,24 +32,34 @@ local function getFileVersion(filename)
     end
 end
 
--- Helper: Get list of .lua files (recursively)
-local function getAllLuaFiles(dir)
-    local files = {}
-    for _, item in ipairs(fs.list(dir)) do
-        local path = dir .. "/" .. item
-        if fs.isDir(path) then
-            local subfiles = getAllLuaFiles(path)
-            for _, f in ipairs(subfiles) do
-                table.insert(files, f)
-            end
-        elseif item:match("%.lua$") then
-            table.insert(files, path)
+-- Auto-detect tracked files from startup.lua
+local function getTrackedFiles()
+    local tracked = {}
+    if not fs.exists("startup.lua") then return tracked end
+
+    local f = fs.open("startup.lua", "r")
+    local contents = f.readAll()
+    f.close()
+
+    for path in contents:gmatch('path%s*=%s*"([^"]+)"') do
+        table.insert(tracked, path)
+    end
+
+    for path in contents:gmatch('"%s*(modules/[^"]+%.lua)"') do
+        if not table.contains(tracked, path) then
+            table.insert(tracked, path)
         end
     end
-    return files
+
+    -- Add dashboard.lua if not explicitly included
+    if not table.concat(tracked, " "):find("dashboard.lua") and fs.exists("dashboard.lua") then
+        table.insert(tracked, "dashboard.lua")
+    end
+
+    return tracked
 end
 
--- Draw toggle buttons (row 1)
+-- Draw top buttons
 local function drawButtons(mon)
     mon.setCursorPos(2, 1)
     mon.setTextColor(colors.cyan)
@@ -69,19 +79,18 @@ local function drawVersions(mon)
     drawButtons(mon)
 
     local row = 3
-    local files = getAllLuaFiles("") -- From root
-
+    local files = getTrackedFiles()
     table.sort(files)
 
     for _, path in ipairs(files) do
         if row >= MON_HEIGHT then break end
         local version = getFileVersion(path)
         mon.setCursorPos(2, row)
+        mon.setTextColor(colors.white)
         mon.write(("%-40s"):format(path:sub(1, 40)))
         mon.setCursorPos(MON_WIDTH - 8, row)
         mon.setTextColor(colors.orange)
         mon.write("v" .. version)
-        mon.setTextColor(colors.white)
         row = row + 1
     end
 end
@@ -103,10 +112,9 @@ local function drawLog(mon)
     mon.setTextColor(colors.white)
 end
 
--- Public: draw current mode
+-- Public: draw the current mode
 function logger.draw(mon)
     MON_WIDTH, MON_HEIGHT = mon.getSize()
-
     if MODE == "versions" then
         drawVersions(mon)
     else
@@ -114,7 +122,7 @@ function logger.draw(mon)
     end
 end
 
--- Public: handle monitor touch event
+-- Public: handle monitor touch events
 function logger.handleTouch(x, y)
     if y == 1 then
         if x >= 2 and x <= 18 then
