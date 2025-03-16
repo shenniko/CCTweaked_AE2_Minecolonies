@@ -49,29 +49,35 @@ local function displayTimer(mon, t)
         cycle_color = colors.red
     end
 
-    -- Format time strings
+    local width = mon.getSize()
+
+    -- Clear the entire top row first
+    mon.setCursorPos(1, 1)
+    mon.setBackgroundColor(colors.black)
+    mon.write(string.rep(" ", width))
+
+    -- Build left and right text
     local timeText = string.format("Time: %s [%s]", textutils.formatTime(now, false), cycle)
-    local remainingText = cycle == "night"
+    local remainingText = (cycle == "night")
         and "Remaining: PAUSED"
         or string.format("Remaining: %ss", t)
 
-    -- Pad strings to screen width
-    local width = mon.getSize()
-    timeText = timeText .. string.rep(" ", width - #timeText)
-    remainingText = remainingText .. string.rep(" ", width - #remainingText)
-
-    -- Print both sides using full overwrite
+    -- Print left-aligned time text
     mon.setCursorPos(1, 1)
     mon.setTextColor(cycle_color)
     mon.write(timeText)
 
+    -- Print right-aligned remaining time
+    local timer_color = (cycle == "night") and colors.red
+        or (t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange))
+
     mon.setCursorPos(width - #remainingText + 1, 1)
-    mon.setTextColor((cycle == "night") and colors.red or (t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange)))
+    mon.setTextColor(timer_color)
     mon.write(remainingText)
 
+    -- Reset text color
     mon.setTextColor(colors.white)
 end
-
 
 -- === 🧱 Draw Colonist & Construction Boxes ===
 local function drawLowerBoxes(mon, citizens, buildings, topRow)
