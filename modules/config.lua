@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- config.lua
 -- Central config for all tweakable settings
 
