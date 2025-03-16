@@ -1,18 +1,16 @@
--- Version: 1.9
--- requests.lua - Display colony requests in a clean bordered box
+-- Version: 1.8.1
+-- requests.lua - Display colony requests in a structured box format
 
 local display = require("modules.display")
 local colony = require("modules.colony")
 
 local requests = {}
 
--- Format raw item string into something human-readable
 local function formatItemName(raw)
     local name = raw:match(":(.+)") or raw
     return name:gsub("_", " ")
 end
 
--- Split role and name from colony target string
 local function splitRoleAndName(target)
     if not target or target == "" then return "Unknown", "Unknown" end
     local words = {}
@@ -26,7 +24,6 @@ end
 function requests.drawRequests(mon, colonyPeripheral)
     local list = {}
 
-    -- Safe request fetch
     local ok, result = pcall(colony.getWorkRequests, colonyPeripheral)
     if ok and type(result) == "table" then
         list = result
@@ -38,9 +35,10 @@ function requests.drawRequests(mon, colonyPeripheral)
     end
 
     display.clear(mon)
+
     local w, h = mon.getSize()
     local boxX1, boxY1, boxX2, boxY2 = 1, 1, w, h
-    display.drawFancyBox(mon, boxX1, boxY1, boxX2, boxY2, "MineColonies Work Requests", colors.gray)
+    display.drawTitledBox(mon, boxX1, boxY1, boxX2, boxY2, "MineColonies Work Requests", colors.gray, colors.black, colors.cyan)
 
     local row = boxY1 + 2
 
@@ -49,45 +47,45 @@ function requests.drawRequests(mon, colonyPeripheral)
         return
     end
 
-    -- Column layout
+    -- Define columns
     local qtyW = 5
     local itemW = 30
     local jobW = 12
-    local nameW = w - (qtyW + itemW + jobW + 8)
+    local nameW = w - (qtyW + itemW + jobW + 6)
 
     local qtyX = boxX1 + 2
     local itemX = qtyX + qtyW + 1
     local jobX = itemX + itemW + 1
     local nameX = jobX + jobW + 1
 
-    -- Table headers
-    display.drawTableHeaders(mon, row, {
-        { x = qtyX,  label = "Qty" },
-        { x = itemX, label = "Item" },
-        { x = jobX,  label = "Job" },
-        { x = nameX, label = "Colonist" }
-    })
+    -- Draw headers
+    mon.setCursorPos(qtyX, row)
+    mon.setTextColor(colors.lightGray)
+    mon.write("Qty")
+    mon.setCursorPos(itemX, row)
+    mon.write("Item")
+    mon.setCursorPos(jobX, row)
+    mon.write("Job")
+    mon.setCursorPos(nameX, row)
+    mon.write("Colonist")
 
-    -- Underline
     row = row + 1
     mon.setCursorPos(qtyX, row)
-    mon.setTextColor(colors.gray)
-    mon.write(string.rep("-", w - qtyX - 1))
+    mon.write(string.rep("─", w - 4)) -- fixed to avoid border collision
     row = row + 1
 
-    -- Display requests
     for _, req in ipairs(list) do
         local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
         local count = req.count or 1
         local job, name = splitRoleAndName(req.target or "")
-        local niceName = formatItemName(item)
+        local niceName = formatItemName(item):gsub("^%s+", "")
 
         mon.setCursorPos(qtyX, row)
         mon.setTextColor(colors.yellow)
         mon.write(string.format("%-4s", count .. "x"))
 
         mon.setCursorPos(itemX, row)
-        mon.write(niceName:sub(1, itemW):gsub("^%s+", ""))
+        mon.write(niceName:sub(1, itemW))
 
         mon.setCursorPos(jobX, row)
         mon.write(job:sub(1, jobW))
@@ -96,7 +94,7 @@ function requests.drawRequests(mon, colonyPeripheral)
         mon.write(name:sub(1, nameW))
 
         row = row + 1
-        if row >= boxY2 - 1 then break end
+        if row >= h - 1 then break end
     end
 end
 
