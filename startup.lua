@@ -1,4 +1,4 @@
--- Version: 2.0
+-- Version: 2.01
 -- startup.lua - Auto-updater and launcher for ME Dashboard
 
 local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
@@ -25,7 +25,7 @@ local FILES = {
 -- Download a file from GitHub and overwrite it safely
 local function downloadFile(path, target)
     local url = ("https://raw.githubusercontent.com/%s/%s/%s"):format(REPO, BRANCH, path)
-    print("[⬇] Downloading: " .. path)
+    print("Downloading: " .. path)
 
     local response = http.get(url .. "?t=" .. os.epoch("utc"))  -- cache bust
     if not response then
