@@ -7,7 +7,7 @@ local logger = require("modules.logger")
 local colonyUtil = require("modules.colony")
 local meutils = require("modules.meutils")
 local workhandler = require("modules.workhandler")
-local config = require("config")
+local config = require("modules.config")
 
 local STORAGE_SIDE = config.ME_STORAGE_SIDE
 local TIME_BETWEEN_SCANS = config.TIME_BETWEEN_SCANS
