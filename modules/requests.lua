@@ -38,12 +38,12 @@ function requests.drawRequests(mon, colonyPeripheral)
 
     local w, h = mon.getSize()
     local boxX1, boxY1, boxX2, boxY2 = 1, 1, w, h
-    display.drawTitledBox(mon, boxX1, boxY1, boxX2, boxY2, "MineColonies Work Requests", colors.gray, colors.black, colors.cyan)
+    display.drawTitledBox(mon, boxX1, boxY1, boxX2, boxY2, " MineColonies Work Requests ", colors.gray, colors.black, colors.cyan)
 
     local row = boxY1 + 2
 
     if #list == 0 then
-        display.printLine(mon, row, "No active work requests", colors.gray)
+        display.printLine(mon, row, " No active work requests ", colors.gray)
         return
     end
 
