@@ -1,4 +1,4 @@
--- Version: 1.0
+-- Version: 1.01
 -- startup.lua - Auto-updater and launcher for ME Dashboard
 
 local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
@@ -41,7 +41,7 @@ local function downloadFile(path, target)
         local file = fs.open(target, "w")
         file.write(content)
         file.close()
-        print("[✓] Saved as " .. target)
+        print("Saved as " .. target)
         return true
     else
         print("[X] Failed to download " .. path)
