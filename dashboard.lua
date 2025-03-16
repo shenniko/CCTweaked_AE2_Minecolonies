@@ -1,4 +1,4 @@
--- Version: 1.11
+-- Version: 1.12
 -- dashboard.lua - Combined dashboard for MineColonies + AE2
 
 -- === Modules ===
@@ -96,7 +96,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
 for _, b in ipairs(buildings) do
     local progress = b.progress or 0
     local target = (b.target and #b.target > 0) and b.target or "Idle"
-    local line = string.format("%s - %s [%d%%]", b.name, target, progress)
+    local line = string.format("%s - %s%s [%d%%]", b.name, b.target, b.extra or "", b.progress or 0)
 
     mon.setCursorPos(40, y2)
     mon.write(line:sub(1, MAIN_WIDTH - 40))
