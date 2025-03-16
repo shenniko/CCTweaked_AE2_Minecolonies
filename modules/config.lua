@@ -1,48 +1,20 @@
--- colony.lua
--- Functions for interacting with the colonyIntegrator peripheral
+-- config.lua
+-- Central config for all tweakable settings
 
-local colony = {}
+local config = {
+    -- Peripheral names
+    MONITOR_MAIN = "monitor_4",
+    MONITOR_DEBUG = "monitor_6",
+    ME_STORAGE_SIDE = "bottom",
 
--- Get basic status of all citizens, including profession/job
-function colony.getColonyStatus(colonyPeripheral)
-    local list = {}
-    for _, c in ipairs(colonyPeripheral.getCitizens()) do
-        table.insert(list, {
-            name = c.name,
-            health = c.health,
-            hunger = c.saturation,
-            happiness = c.happiness,
-            job = c.job and c.job.name or "Unemployed"
-        })
-    end
-    return list
-end
+    -- Scan interval (seconds between checks)
+    TIME_BETWEEN_SCANS = 30,
 
--- Get all builder-related building progress
-function colony.getConstructionStatus(colonyPeripheral)
-    local result = {}
-    for _, b in ipairs(colonyPeripheral.getBuildings()) do
-        if b.type == "builder" then
-            table.insert(result, {
-                name = b.name,
-                status = b.progress or "In Progress"
-            })
-        end
-    end
-    return result
-end
+    -- Maximum debug log entries
+    DEBUG_LOG_LIMIT = 100,
 
--- Extract colonist's name from target string (last 2 words)
-function colony.extractTargetName(target)
-    local words = {}
-    for word in target:gmatch("%S+") do
-        table.insert(words, word)
-    end
-    if #words >= 2 then
-        return words[#words - 1] .. " " .. words[#words]
-    else
-        return target
-    end
-end
+    -- Text scale
+    TEXT_SCALE = 0.5
+}
 
-return colony
+return config
