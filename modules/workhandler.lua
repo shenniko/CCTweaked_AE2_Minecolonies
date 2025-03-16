@@ -1,28 +1,28 @@
--- Version: 1.2
+-- Version: 1.12
 -- workhandler.lua - Handles MineColonies work requests and ME interactions
 
 local meutils = require("modules.meutils")
 local requestFilter = require("modules.requestFilter")
 local colonyUtil = require("modules.colony")
 local logger = require("modules.logger")
+local peripherals = require("modules.peripherals")
 
 local workhandler = {}
 
--- Main scan and render logic
 function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
-    local builder_list = {}
-    local nonbuilder_list = {}
-    local equipment_list = {}
+    local builder_list, nonbuilder_list, equipment_list = {}, {}, {}
 
-    -- Get work requests
-    local colony = peripheral.find("colonyIntegrator")
-    if not colony then
-        logger.add("Colony Integrator not found!", colors.red)
+    local colony = peripherals.getColonyIntegrator()
+    local meBridge = peripherals.getMEBridge()
+    if not colony or not meBridge then
+        logger.add("Missing colonyIntegrator or meBridge", colors.red)
         return
     end
 
     local requests = colony.getRequests()
     if not requests then return end
+
+    local itemMap = meutils.getItemMap(meBridge)
 
     for _, req in ipairs(requests) do
         local item = req.items[1]
@@ -31,37 +31,28 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
         local provided = 0
         local desc = req.desc
         local target = colonyUtil.extractTargetName(req.target or "")
-        local requester = req.target or ""
         local displayColor = colors.blue
 
-        -- Determine request category
         local isEquipment = desc:find("Tool of class") or requestFilter.isEquipment(req.name)
         local isBuilder = target:lower():find("builder")
-
-        -- Should we use ME system?
         local useME = not requestFilter.shouldSkipItem(req.name)
 
         if useME then
-            local canExport, available = meutils.canExport(itemName)
+            local entry = itemMap[itemName]
+            local canExport = entry ~= nil
 
             if canExport then
-                -- Attempt export
-                local success = pcall(function()
-                    provided = peripheral.call(storageSide, "pullItem", {
-                        name = itemName,
-                        count = needed,
-                        direction = storageSide
-                    })
+                local success, err = pcall(function()
+                    provided = meBridge.exportItem({ name = itemName, count = needed }, storageSide)
                 end)
                 if provided and provided >= needed then
                     displayColor = colors.lime
                     logger.add("[Provided] " .. needed .. " x " .. itemName, colors.lime)
                 else
-                    -- Try crafting
                     if meutils.isCrafting(itemName) then
                         displayColor = colors.yellow
                         logger.add("[Crafting] " .. itemName, colors.yellow)
-                    elseif peripheral.call(peripheral.find("meBridge"), "craftItem", { name = itemName, count = needed }) then
+                    elseif meBridge.craftItem({ name = itemName, count = needed }) then
                         displayColor = colors.orange
                         logger.add("[Scheduled] " .. needed .. " x " .. itemName, colors.orange)
                     else
@@ -78,7 +69,7 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
             logger.add("[Skipped] " .. req.name .. " [" .. target .. "]", colors.gray)
         end
 
-        -- Determine job/profession
+        -- Get citizen profession
         local profession = "Unknown"
         for _, c in ipairs(colonists or {}) do
             if c.name == target then
@@ -93,7 +84,7 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
             needed = needed,
             provided = provided,
             target = target,
-            requester = requester,
+            requester = req.target,
             color = displayColor,
             profession = profession
         }
@@ -107,7 +98,7 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
         end
     end
 
-    -- Draw top section
+    -- === Drawing section ===
     mon.setCursorPos(1, 2)
     mon.setTextColor(colors.white)
     mon.clear()
