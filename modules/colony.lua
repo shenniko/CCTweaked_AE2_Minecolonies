@@ -1,4 +1,4 @@
--- Version: 1.2
+-- Version: 1.13
 -- colony.lua - Handles data gathering from the colony peripheral
 
 local colony = {}
@@ -16,7 +16,7 @@ function colony.getColonyStatus(colonyPeripheral)
             saturation = c.saturation,
             happiness = c.happiness,
             job = c.job and c.job.name or "Unemployed",
-            work = c.work -- preserve for builder work check
+            work = c.work -- preserve for builder task matching
         })
     end
 
@@ -46,15 +46,21 @@ function colony.getConstructionStatus(colonyPeripheral)
             local taskDescription = "Idle"
             local progressText = ""
 
-            -- Try to find the assigned builder citizen
             for _, c in ipairs(citizens) do
                 if c.job and c.job.location and b.location then
                     if c.job.location.x == b.location.x and
                        c.job.location.y == b.location.y and
                        c.job.location.z == b.location.z then
 
-                        if c.work and c.work.description then
-                            taskDescription = c.work.description
+                        if c.work then
+                            if c.work.description and #c.work.description > 0 then
+                                taskDescription = c.work.description
+                            elseif c.work.type then
+                                taskDescription = c.work.type
+                            elseif type(c.work) == "string" then
+                                taskDescription = c.work
+                            end
+
                             if c.work.step then
                                 progressText = string.format(" [Step %s]", c.work.step)
                             end
@@ -76,6 +82,7 @@ function colony.getConstructionStatus(colonyPeripheral)
     return result
 end
 
+-- Used in workhandler to simplify target name from request
 function colony.extractTargetName(target)
     local words = {}
     for word in target:gmatch("%S+") do
