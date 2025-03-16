@@ -1,11 +1,9 @@
 -- colony.lua
 -- Functions for interacting with the colonyIntegrator peripheral
--- Handles colonist status and construction/building info
 
 local colony = {}
 
--- Get basic status of all citizens
--- Returns a table of { name, health, hunger, happiness, profession }
+-- Get basic status of all citizens, including profession/job
 function colony.getColonyStatus(colonyPeripheral)
     local list = {}
     for _, c in ipairs(colonyPeripheral.getCitizens()) do
@@ -20,9 +18,7 @@ function colony.getColonyStatus(colonyPeripheral)
     return list
 end
 
-
--- Get status of all builder buildings
--- Returns a table of { name, status }
+-- Get all builder-related building progress
 function colony.getConstructionStatus(colonyPeripheral)
     local result = {}
     for _, b in ipairs(colonyPeripheral.getBuildings()) do
@@ -36,8 +32,7 @@ function colony.getConstructionStatus(colonyPeripheral)
     return result
 end
 
--- Get name from target string (e.g., last 2 words)
--- e.g., "Builder Hut 1" -> "Hut 1"
+-- Extract colonist's name from target string (last 2 words)
 function colony.extractTargetName(target)
     local words = {}
     for word in target:gmatch("%S+") do
