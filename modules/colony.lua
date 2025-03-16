@@ -1,4 +1,4 @@
--- Version: 1.12
+-- Version: 1.2
 -- colony.lua - Handles data gathering from the colony peripheral
 
 local colony = {}
