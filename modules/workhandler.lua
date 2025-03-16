@@ -1,5 +1,5 @@
 -- workhandler.lua
--- Processes colony requests and interacts with ME system
+-- Handles colony requests + ME logic, with crash safety + profession display
 
 local workhandler = {}
 
@@ -9,7 +9,6 @@ local display = require("modules.display")
 local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
 
--- Extract colonist name from target string (e.g., "Builder's Hut 2 - C. Asplin")
 local function extractNameFromTarget(target)
     local words = {}
     for word in target:gmatch("%S+") do table.insert(words, word) end
@@ -19,7 +18,6 @@ local function extractNameFromTarget(target)
     return target
 end
 
--- Find job/profession based on colonist name from target
 local function getColonistJobByTarget(colonists, target)
     local name = extractNameFromTarget(target)
     for _, c in ipairs(colonists or {}) do
@@ -27,10 +25,9 @@ local function getColonistJobByTarget(colonists, target)
             return c.job or target
         end
     end
-    return target -- fallback: show full target string
+    return target
 end
 
--- Main scan and render logic
 function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight, colonists)
     local builder_list = {}
     local nonbuilder_list = {}
@@ -70,7 +67,6 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
                 end
             end
 
-            -- Create entry for rendering
             local entry = {
                 name = request.name,
                 item = itemName,
@@ -90,9 +86,12 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
         else
             logger.add("[Skipped] Malformed request (missing item name)", colors.red)
         end
+
+        -- 💤 Give server a breather between requests
+        sleep(0.05)
     end
 
-    -- === Render UI ===
+    -- === Render Work Request UI ===
     local row = 2
     mon.clear()
     display.mPrintRowJustified(mon, 1, "center", "MineColonies Work Requests", colors.white)
