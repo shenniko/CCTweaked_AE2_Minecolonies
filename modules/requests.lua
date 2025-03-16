@@ -1,9 +1,8 @@
--- Version: 1.10
--- requests.lua - Display colony requests split into sub-windows using painted borders
+-- Version: 2.0
+-- requests.lua - Display colony requests in separate builder/worker boxes + side menu
 
 local display = require("modules.display")
 local colony = require("modules.colony")
-
 local requests = {}
 
 local function formatItemName(raw)
@@ -16,104 +15,109 @@ local function splitRoleAndName(target)
     local words = {}
     for word in target:gmatch("%S+") do table.insert(words, word) end
     if #words < 2 then return "Unknown", target end
-    local job = words[1]
-    local name = table.concat(words, " ", 2)
-    return job, name
+    return words[1], table.concat(words, " ", 2)
+end
+
+-- Render request list into a box
+local function drawRequestSection(mon, x1, y1, x2, y2, title, list)
+    display.drawTitledBox(mon, x1, y1, x2, y2, title, colors.cyan, colors.black, colors.cyan)
+
+    local qtyW = 5
+    local itemW = 25
+    local jobW = 10
+    local nameW = x2 - x1 - (qtyW + itemW + jobW + 8)
+
+    local qtyX = x1 + 2
+    local itemX = qtyX + qtyW + 1
+    local jobX = itemX + itemW + 1
+    local nameX = jobX + jobW + 1
+
+    local row = y1 + 2
+
+    -- Header row
+    mon.setCursorPos(qtyX, row)
+    mon.setTextColor(colors.lightGray)
+    mon.write("Qty")
+    mon.setCursorPos(itemX, row)
+    mon.write("Item")
+    mon.setCursorPos(jobX, row)
+    mon.write("Job")
+    mon.setCursorPos(nameX, row)
+    mon.write("Colonist")
+    row = row + 1
+
+    -- Separator
+    mon.setCursorPos(qtyX, row)
+    mon.write(string.rep("-", x2 - x1 - 2))
+    row = row + 1
+
+    -- Content rows
+    for _, req in ipairs(list) do
+        if row >= y2 then break end
+
+        local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
+        local count = req.count or 1
+        local job, name = splitRoleAndName(req.target or "")
+        local niceName = formatItemName(item):gsub("^%s+", "")
+
+        mon.setCursorPos(qtyX, row)
+        mon.setTextColor(colors.yellow)
+        mon.write(string.format("%-4s", count .. "x"))
+
+        mon.setCursorPos(itemX, row)
+        mon.write(niceName:sub(1, itemW))
+
+        mon.setCursorPos(jobX, row)
+        mon.write(job:sub(1, jobW))
+
+        mon.setCursorPos(nameX, row)
+        mon.write(name:sub(1, nameW))
+
+        row = row + 1
+    end
 end
 
 function requests.drawRequests(mon, colonyPeripheral)
-    display.clear(mon)
     local w, h = mon.getSize()
-
-    -- Draw outer main box
-    display.drawTitledBox(mon, 1, 1, w, h, "MineColonies Work Requests", colors.gray, colors.black, colors.cyan)
-
-    -- Get and categorize requests
     local list = {}
+
     local ok, result = pcall(colony.getWorkRequests, colonyPeripheral)
-    if ok and type(result) == "table" then
-        list = result
-    else
-        display.printLine(mon, 3, "Error: Unable to get requests.", colors.red)
-        return
-    end
+    if ok and type(result) == "table" then list = result end
 
-    local builders = {}
-    local workers = {}
+    display.clear(mon)
+    display.drawTitledBox(mon, 1, 1, w, h, "MineColonies Work Requests", colors.lightBlue, colors.black, colors.cyan)
 
+    -- Split into builder / worker lists
+    local builders, workers = {}, {}
     for _, req in ipairs(list) do
-        local job, _ = splitRoleAndName(req.target or "")
-        if job:lower() == "builder" then
+        local job = req.target:lower():match("^(%w+)")
+        if job == "builder" then
             table.insert(builders, req)
         else
             table.insert(workers, req)
         end
     end
 
-    -- Define shared layout
-    local boxW = w - 4
-    local builderBoxY = 3
-    local builderBoxH = math.floor((h - 5) / 2)
-    local workerBoxY = builderBoxY + builderBoxH + 1
-    local workerBoxH = h - workerBoxY - 1
+    -- Layout
+    local padding = 2
+    local contentW = w - 20 -- leave space for right-side menu
+    local midY = math.floor(h / 2)
 
-    -- Draw Builder box
-    display.drawTitledBox(mon, 3, builderBoxY, w - 2, builderBoxY + builderBoxH, "Builder Requests", colors.lightGray, colors.black)
+    -- Builder box (top left)
+    drawRequestSection(mon, padding, 3, contentW, midY - 1, "Builder Requests", builders)
 
-    -- Draw Worker box
-    display.drawTitledBox(mon, 3, workerBoxY, w - 2, workerBoxY + workerBoxH, "Worker Requests", colors.lightGray, colors.black)
+    -- Worker box (bottom left)
+    drawRequestSection(mon, padding, midY + 1, contentW, h - 2, "Worker Requests", workers)
 
-    -- Shared function for drawing request rows
-    local function drawSection(reqList, startY, maxY)
-        local row = startY
-        local qtyW, itemW, jobW = 5, 28, 12
-        local nameW = w - (qtyW + itemW + jobW + 10)
-        local qtyX = 5
-        local itemX = qtyX + qtyW + 1
-        local jobX = itemX + itemW + 1
-        local nameX = jobX + jobW + 1
-
-        mon.setCursorPos(qtyX, row)
-        mon.setTextColor(colors.lightGray)
-        mon.write("Qty")
-        mon.setCursorPos(itemX, row)
-        mon.write("Item")
-        mon.setCursorPos(jobX, row)
-        mon.write("Job")
-        mon.setCursorPos(nameX, row)
-        mon.write("Colonist")
-
-        row = row + 1
-        mon.setCursorPos(qtyX, row)
-        mon.write(string.rep("-", w - 6))
-        row = row + 1
-
-        for _, req in ipairs(reqList) do
-            if row >= maxY then break end
-            local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
-            local count = req.count or 1
-            local job, name = splitRoleAndName(req.target or "")
-            local niceName = formatItemName(item):gsub("^%s+", "")
-
-            mon.setCursorPos(qtyX, row)
-            mon.setTextColor(colors.yellow)
-            mon.write(string.format("%-4s", count .. "x"))
-
-            mon.setCursorPos(itemX, row)
-            mon.write(niceName:sub(1, itemW))
-
-            mon.setCursorPos(jobX, row)
-            mon.write(job:sub(1, jobW))
-
-            mon.setCursorPos(nameX, row)
-            mon.write(name:sub(1, nameW))
-
-            row = row + 1
-        end
-    end
-
-    drawSection(builders, builderBoxY + 2, builderBoxY + builderBoxH - 1)
-    drawSection(workers, workerBoxY + 2, workerBoxY + workerBoxH - 1)
+    -- Side Menu
+    display.drawTitledBox(mon, contentW + 2, 3, w - 2, h - 2, "Menu", colors.cyan, colors.black, colors.white)
+    mon.setCursorPos(contentW + 4, 5)
+    mon.setTextColor(colors.lime)
+    mon.write("[1] Requests")
+    mon.setCursorPos(contentW + 4, 7)
+    mon.write("[2] Overview")
+    mon.setCursorPos(contentW + 4, 9)
+    mon.write("[3] Resources")
 end
 
 return requests
