@@ -1,7 +1,20 @@
--- Version: 1.15
+-- Version: 1.16
 -- colony.lua - Handles data gathering from the colony peripheral
 
 local colony = {}
+
+-- Utility: Clean internal MineColonies names into display-friendly ones
+local function cleanName(str)
+    return str
+        :gsub("^.*colonies%.", "")
+        :gsub("^.*building%.", "")
+        :gsub("^.*minecolonies%.", "")
+        :gsub("^.*job%.", "")
+        :gsub("_", " ")
+        :gsub("%.", " ")
+        :gsub("^%s+", "")
+        :gsub("%s+$", "")
+end
 
 -- Get all citizens with relevant info
 function colony.getColonyStatus(colonyPeripheral)
@@ -15,9 +28,9 @@ function colony.getColonyStatus(colonyPeripheral)
             health = c.health,
             saturation = c.saturation,
             happiness = c.happiness,
-            -- Prefer the name of the building they're working in
-            job = (c.work and c.work.name)
-                or (c.job and c.job.name)
+            -- Prefer work.name (building name), then fallback to job name
+            job = (c.work and cleanName(c.work.name))
+                or (c.job and cleanName(c.job.name))
                 or "Unemployed",
             work = c.work
         })
@@ -38,8 +51,8 @@ function colony.getConstructionStatus(colonyPeripheral)
         if c.work and c.work.type == "builder" then
             local builderName = c.name
             local work = c.work
-            local buildingName = work.name or "Unknown"
-            local task = work.description or work.job or "Working"
+            local buildingName = cleanName(work.name or "Unknown")
+            local task = cleanName(work.description or work.job or "Working")
             local step = work.step and (" [Step " .. work.step .. "]") or ""
             local level = work.level and (" (Level " .. work.level .. ")") or ""
 
