@@ -1,4 +1,4 @@
--- Version: 1.20
+-- Version: 1.21
 -- logger.lua - Debug + Per-File Version Viewer + Click-to-Update
 
 local logger = {}
@@ -35,22 +35,28 @@ local function getFileVersion(filename)
 end
 
 local function getTrackedFiles()
-    local tracked = {}
-    if not fs.exists("startup.lua") then return tracked end
+    local tracked = {
+        ["startup.lua"] = true -- manually add
+    }
 
-    local f = fs.open("startup.lua", "r")
-    local contents = f.readAll()
-    f.close()
+    if fs.exists("startup.lua") then
+        local f = fs.open("startup.lua", "r")
+        local contents = f.readAll()
+        f.close()
 
-    for path in contents:gmatch('path%s*=%s*"([^"]+)"') do
-        tracked[path] = true
+        for path in contents:gmatch('path%s*=%s*"([^"]+)"') do
+            tracked[path] = true
+        end
+        for path in contents:gmatch('"%s*(modules/[^"]+%.lua)"') do
+            tracked[path] = true
+        end
     end
-    for path in contents:gmatch('"%s*(modules/[^"]+%.lua)"') do
-        tracked[path] = true
-    end
-    if fs.exists("dashboard.lua") then tracked["dashboard.lua"] = true end
 
-    -- Convert to sorted array
+    if fs.exists("dashboard.lua") then
+        tracked["dashboard.lua"] = true
+    end
+
+    -- Convert to sorted list
     local result = {}
     for path in pairs(tracked) do table.insert(result, path) end
     table.sort(result)
