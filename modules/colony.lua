@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- colony.lua
 -- Functions for interacting with the colonyIntegrator peripheral
 
