@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- dashboard.lua
 -- Central dashboard that uses modules & peripherals manager
 
