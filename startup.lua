@@ -3,7 +3,11 @@
 local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
 local BRANCH = "main"
 local FILES = {
-  { path = "MEWarehouse_MultiMonitor.lua", target = "dashboard.lua" }
+  { path = "MEWarehouse_MultiMonitor.lua", target = "dashboard.lua" },
+  { path = "modules/display.lua", target = "modules/display.lua" },
+  { path = "modules/logger.lua", target = "modules/logger.lua" },
+  { path = "modules/colony.lua", target = "modules/colony.lua" },
+  { path = "modules/meutils.lua", target = "modules/meutils.lua" }
 }
 
 local function downloadFile(path, target)
