@@ -1,4 +1,4 @@
--- Version: 1.0
+-- Version: 1.1
 -- config.lua
 -- Central config for all tweakable settings
 
@@ -16,6 +16,35 @@ local config = {
 
     -- Text scale
     TEXT_SCALE = 0.5
+}
+
+-- Tool / Sword material limits by work hut level
+config.toolLevels = {
+    [0] = "wood",
+    [1] = "stone",
+    [2] = "iron",
+    [3] = "diamond",
+    [4] = "netherite",
+    [5] = "all"
+}
+
+-- Armor material limits by guard tower level
+config.armorLevels = {
+    [1] = "leather",
+    [2] = "chainmail",
+    [3] = "iron",
+    [4] = "diamond",
+    [5] = "all"
+}
+
+-- (Optional) Bow / Fishing rod support – not used yet
+config.bowLevels = {
+    [0] = "none",
+    [1] = "none",
+    [2] = "basic",
+    [3] = "basic",
+    [4] = "basic",
+    [5] = "all"
 }
 
 return config
