@@ -5,7 +5,7 @@
 local colony = {}
 
 -- Get basic status of all citizens
--- Returns a table of { name, health, hunger, happiness }
+-- Returns a table of { name, health, hunger, happiness, profession }
 function colony.getColonyStatus(colonyPeripheral)
     local list = {}
     for _, c in ipairs(colonyPeripheral.getCitizens()) do
@@ -13,11 +13,13 @@ function colony.getColonyStatus(colonyPeripheral)
             name = c.name,
             health = c.health,
             hunger = c.saturation,
-            happiness = c.happiness
+            happiness = c.happiness,
+            job = c.job and c.job.name or "Unemployed"
         })
     end
     return list
 end
+
 
 -- Get status of all builder buildings
 -- Returns a table of { name, status }
