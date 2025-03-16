@@ -9,8 +9,11 @@ local meutils = require("modules.meutils")
 local workhandler = require("modules.workhandler")
 local config = require("modules.config")
 
+-- === ⚙️ Configuration ===
 local STORAGE_SIDE = config.ME_STORAGE_SIDE
 local TIME_BETWEEN_SCANS = config.TIME_BETWEEN_SCANS
+
+-- === 🖥️ Peripheral Setup ===
 local monitor_main = peripheral.wrap(config.MONITOR_MAIN)
 local monitor_debug = peripheral.wrap(config.MONITOR_DEBUG)
 local meBridge = peripheral.find("meBridge")
@@ -39,21 +42,42 @@ local function displayTimer(mon, t)
     local cycle_color = colors.orange
 
     if now >= 6 and now < 18 then
-        cycle = "day" cycle_color = colors.yellow
+        cycle = "day"
+        cycle_color = colors.yellow
     elseif now >= 18 and now < 19.5 then
-        cycle = "sunset" cycle_color = colors.orange
+        cycle = "sunset"
+        cycle_color = colors.orange
     elseif now >= 19.5 or now < 5 then
-        cycle = "night" cycle_color = colors.red
+        cycle = "night"
+        cycle_color = colors.red
     end
 
-    local timer_color = t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange)
-    display.mPrintRowJustified(mon, 1, "left", string.format("Time: %s [%s]", textutils.formatTime(now, false), cycle), cycle_color)
+    local timeText = string.format("Time: %s [%s]", textutils.formatTime(now, false), cycle)
+    local remainingText = (cycle == "night")
+        and "Remaining: PAUSED"
+        or string.format("Remaining: %ss", t)
 
-    if cycle ~= "night" then
-        display.mPrintRowJustified(mon, 1, "right", string.format("Remaining: %ss", t), timer_color)
-    else
-        display.mPrintRowJustified(mon, 1, "right", "Remaining: PAUSED", colors.red)
-    end
+    local width = mon.getSize()
+
+    -- Clear the top line
+    mon.setCursorPos(1, 1)
+    mon.setBackgroundColor(colors.black)
+    mon.write(string.rep(" ", width))
+
+    -- Print left-aligned time
+    mon.setCursorPos(1, 1)
+    mon.setTextColor(cycle_color)
+    mon.write(timeText)
+
+    -- Print right-aligned remaining time
+    local timer_color = (cycle == "night") and colors.red
+        or (t < 5 and colors.red or (t < 15 and colors.yellow or colors.orange))
+
+    mon.setCursorPos(width - #remainingText + 1, 1)
+    mon.setTextColor(timer_color)
+    mon.write(remainingText)
+
+    mon.setTextColor(colors.white)
 end
 
 -- === 🧱 Draw Colonist & Construction Boxes ===
@@ -61,11 +85,17 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     display.drawBox(mon, 1, topRow, 38, MAIN_HEIGHT, " Colonists ")
     display.drawBox(mon, 39, topRow, MAIN_WIDTH, MAIN_HEIGHT, " Construction ")
 
+    -- Color legend above boxes
+    display.mPrintRowJustified(mon, topRow - 1, "center",
+        "Key: ✔ Provided (green) | ↻ Crafting (yellow) | ↝ Scheduled (orange) | ✖ Failed (red) | ● Skipped (gray)",
+        colors.white)
+
     local y1, y2 = topRow + 1, topRow + 1
 
     for _, c in ipairs(citizens) do
         mon.setCursorPos(2, y1)
-        mon.write(c.name:sub(1, 16))
+        local fullName = string.format("%s", c.name)
+        mon.write(fullName:sub(1, 36))
         mon.setCursorPos(20, y1)
         mon.write("HP:" .. math.floor(c.health))
         y1 = y1 + 1
@@ -85,8 +115,8 @@ end
 
 -- === 🔁 Full Update Cycle ===
 local function runCycle()
-    workhandler.scanAndDisplay(monitor_main, colony, meBridge, STORAGE_SIDE, MAIN_HEIGHT)
     local citizens = colonyUtil.getColonyStatus(colony)
+    workhandler.scanAndDisplay(monitor_main, colony, meBridge, STORAGE_SIDE, MAIN_HEIGHT, citizens)
     local buildings = colonyUtil.getConstructionStatus(colony)
     drawLowerBoxes(monitor_main, citizens, buildings, math.floor(MAIN_HEIGHT / 2) + 1)
     logger.draw(monitor_debug)
