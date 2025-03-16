@@ -1,5 +1,5 @@
--- Version: 2.0
--- requests.lua - Display colony requests with status and split sections
+-- Version: 2.1
+-- requests.lua - Display colony requests with status column and split panels
 
 local display = require("modules.display")
 local colony = require("modules.colony")
@@ -30,14 +30,14 @@ end
 local function drawRequestTable(mon, x1, y1, x2, y2, title, list)
     display.drawTitledBox(mon, x1, y1, x2, y2, title, colors.lightBlue, colors.black, colors.cyan)
 
-    local qtyW, itemW, jobW, nameW, statusW = 4, 24, 10, 16, 10
+    local qtyW, itemW, statusW, jobW, nameW = 4, 20, 10, 10, 16
     local spacing = 1
 
     local qtyX = x1 + 2
     local itemX = qtyX + qtyW + spacing
-    local jobX = itemX + itemW + spacing
+    local statusX = itemX + itemW + spacing
+    local jobX = statusX + statusW + spacing
     local nameX = jobX + jobW + spacing
-    local statusX = nameX + nameW + spacing
 
     local row = y1 + 2
     mon.setCursorPos(qtyX, row)
@@ -45,12 +45,12 @@ local function drawRequestTable(mon, x1, y1, x2, y2, title, list)
     mon.write("Qty")
     mon.setCursorPos(itemX, row)
     mon.write("Item")
+    mon.setCursorPos(statusX, row)
+    mon.write("Status")
     mon.setCursorPos(jobX, row)
     mon.write("Job")
     mon.setCursorPos(nameX, row)
     mon.write("Colonist")
-    mon.setCursorPos(statusX, row)
-    mon.write("Status")
 
     row = row + 1
     mon.setCursorPos(qtyX, row)
@@ -72,14 +72,14 @@ local function drawRequestTable(mon, x1, y1, x2, y2, title, list)
         mon.setCursorPos(itemX, row)
         mon.write(niceName:sub(1, itemW))
 
+        mon.setCursorPos(statusX, row)
+        mon.write(status:sub(1, statusW))
+
         mon.setCursorPos(jobX, row)
         mon.write(job:sub(1, jobW))
 
         mon.setCursorPos(nameX, row)
         mon.write(name:sub(1, nameW))
-
-        mon.setCursorPos(statusX, row)
-        mon.write(status:sub(1, statusW))
 
         row = row + 1
     end
