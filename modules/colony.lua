@@ -1,4 +1,4 @@
--- Version: 1.13
+-- Version: 1.14
 -- colony.lua - Handles data gathering from the colony peripheral
 
 local colony = {}
@@ -16,65 +16,65 @@ function colony.getColonyStatus(colonyPeripheral)
             saturation = c.saturation,
             happiness = c.happiness,
             job = c.job and c.job.name or "Unemployed",
-            work = c.work -- preserve for builder task matching
+            work = c.work
         })
     end
 
     return list
 end
 
--- Get construction status with builder task description
+-- Get builder task display using citizen work and matching to buildings
 function colony.getConstructionStatus(colonyPeripheral)
     local result = {}
 
     if not colonyPeripheral then return result end
 
     local buildings = colonyPeripheral.getBuildings()
+    local buildingMap = {}
+
+    -- Build a quick lookup by location
+    for _, b in ipairs(buildings) do
+        if b.location then
+            local key = string.format("%d,%d,%d", b.location.x, b.location.y, b.location.z)
+            buildingMap[key] = b
+        end
+    end
+
     local citizens = colonyPeripheral.getCitizens()
 
-    for _, b in ipairs(buildings) do
-        if b.type == "builder" then
-            local builderName = b.name
-                :gsub("^.*colonies%.", "")
-                :gsub("^.*building%.", "")
-                :gsub("^.*minecolonies%.", "")
-                :gsub("[^%w_]", " ")
-                :gsub("_", " ")
-                :gsub("^%s+", "")
-                :gsub("%s+$", "")
+    for _, c in ipairs(citizens) do
+        if c.job and c.job.name == "Builder" then
+            local builderName = c.name
+            local work = c.work or {}
+            local action = work.description or work.job or "Idle"
+            local step = work.step and (" [Step " .. work.step .. "]") or ""
+            local level = work.level or ""
 
-            local taskDescription = "Idle"
-            local progressText = ""
-
-            for _, c in ipairs(citizens) do
-                if c.job and c.job.location and b.location then
-                    if c.job.location.x == b.location.x and
-                       c.job.location.y == b.location.y and
-                       c.job.location.z == b.location.z then
-
-                        if c.work then
-                            if c.work.description and #c.work.description > 0 then
-                                taskDescription = c.work.description
-                            elseif c.work.type then
-                                taskDescription = c.work.type
-                            elseif type(c.work) == "string" then
-                                taskDescription = c.work
-                            end
-
-                            if c.work.step then
-                                progressText = string.format(" [Step %s]", c.work.step)
-                            end
-                        end
-                    end
+            local buildingName = "Unknown"
+            if work.location then
+                local key = string.format("%d,%d,%d", work.location.x, work.location.y, work.location.z)
+                local b = buildingMap[key]
+                if b then
+                    -- Clean the name for display
+                    buildingName = b.name
+                        :gsub("^.*colonies%.", "")
+                        :gsub("^.*building%.", "")
+                        :gsub("^.*minecolonies%.", "")
+                        :gsub("[^%w_]", " ")
+                        :gsub("_", " ")
+                        :gsub("^%s+", "")
+                        :gsub("%s+$", "")
                 end
             end
 
+            local line = string.format("%s - %s %s%s", builderName, action, buildingName, step)
+
             table.insert(result, {
                 name = builderName,
-                target = taskDescription,
-                progress = b.progress or 0,
-                built = b.built or false,
-                extra = progressText
+                target = line,
+                progress = 0,
+                built = false,
+                extra = ""
             })
         end
     end
@@ -82,7 +82,7 @@ function colony.getConstructionStatus(colonyPeripheral)
     return result
 end
 
--- Used in workhandler to simplify target name from request
+-- Used in workhandler to simplify request target
 function colony.extractTargetName(target)
     local words = {}
     for word in target:gmatch("%S+") do
