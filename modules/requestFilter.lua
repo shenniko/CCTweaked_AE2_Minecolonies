@@ -1,4 +1,4 @@
--- Version: 1.0
+-- Version: 1.1
 -- requestFilter.lua - Filters item names or descriptions that should not use ME
 
 local requestFilter = {}
