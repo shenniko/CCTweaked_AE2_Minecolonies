@@ -71,7 +71,7 @@ function requests.drawRequests(mon, colonyPeripheral)
 
     row = row + 1
     mon.setCursorPos(qtyX, row)
-    mon.write(string.rep("─", w - 4)) -- fixed to avoid border collision
+    mon.write(string.rep("-", w - 4)) -- fixed to avoid border collision
     row = row + 1
 
     for _, req in ipairs(list) do
