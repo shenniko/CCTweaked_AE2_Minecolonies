@@ -1,4 +1,4 @@
--- workhandler.lua - Handles Colony Requests Safely
+-- workhandler.lua - Main logic for scanning colony work requests
 
 local workhandler = {}
 
@@ -29,20 +29,17 @@ local function getColonistJobByTarget(colonists, target)
 end
 
 function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
-    local colonyPeripheral = peripherals.getColonyIntegrator()
-    if not colonyPeripheral then
+    local colony = peripherals.getColonyIntegrator()
+    if not colony then
         logger.add("[Error] Colony Integrator not found!", colors.red)
         return
     end
 
-    local builder_list = {}
-    local nonbuilder_list = {}
-    local equipment_list = {}
-
+    local builder_list, nonbuilder_list, equipment_list = {}, {}, {}
     local itemMap = meutils.getItemMap()
-    local workRequests = colonyPeripheral.getRequests()
+    local requests = colony.getRequests()
 
-    for _, request in ipairs(workRequests) do
+    for _, request in ipairs(requests) do
         if request and request.items and request.items[1] and request.items[1].name then
             local itemName = request.items[1].name
             local target = colonyUtil.extractTargetName(request.target)
@@ -90,13 +87,13 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
                 table.insert(nonbuilder_list, entry)
             end
         else
-            logger.add("[Skipped] Malformed request (missing item name)", colors.red)
+            logger.add("[Skipped] Malformed request", colors.red)
         end
 
-        sleep(0.05) -- 💤 Give server time
+        sleep(0.05)
     end
 
-    -- === Render Work Request UI ===
+    -- Render Work Table
     local row = 2
     mon.clear()
     display.mPrintRowJustified(mon, 1, "center", "MineColonies Work Requests", colors.white)
