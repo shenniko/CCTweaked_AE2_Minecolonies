@@ -1,6 +1,5 @@
--- Version: 1.0
--- dashboard.lua
--- Central dashboard that uses modules & peripherals manager
+-- Version: 1.01
+-- dashboard.lua - Combined dashboard for MineColonies + AE2
 
 -- === Modules ===
 local display = require("modules.display")
@@ -79,7 +78,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     display.drawBox(mon, 1, topRow, 38, MAIN_HEIGHT, " Colonists ")
     display.drawBox(mon, 39, topRow, MAIN_WIDTH, MAIN_HEIGHT, " Construction ")
     display.mPrintRowJustified(mon, topRow - 1, "center",
-        "Key:Provided (green)|Scheduled (orange)|Crafting (yellow)|Failed (red)|Skipped (gray)",
+        "Key: ✔ Provided | ↻ Crafting | ↝ Scheduled | ✖ Failed | ● Skipped",
         colors.white)
 
     local y1, y2 = topRow + 1, topRow + 1
@@ -104,7 +103,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
     end
 end
 
--- === Cycle ===
+-- === Run a full scan cycle ===
 local function runCycle()
     local citizens = colonyUtil.getColonyStatus(colony)
     workhandler.scanAndDisplay(monitor_main, STORAGE_SIDE, MAIN_HEIGHT, citizens)
@@ -113,7 +112,7 @@ local function runCycle()
     logger.draw(monitor_debug)
 end
 
--- === Loop ===
+-- === Main Loop ===
 local current_run = TIME_BETWEEN_SCANS
 runCycle()
 displayTimer(monitor_main, current_run)
@@ -135,11 +134,19 @@ while true do
         logger.draw(monitor_debug)
         displayTimer(monitor_main, current_run)
         TIMER = os.startTimer(1)
+
     elseif e[1] == "monitor_touch" then
-        os.cancelTimer(TIMER)
-        runCycle()
-        current_run = TIME_BETWEEN_SCANS
-        displayTimer(monitor_main, current_run)
-        TIMER = os.startTimer(1)
+        local _, side, x, y = table.unpack(e)
+
+        if side == config.MONITOR_DEBUG then
+            logger.handleTouch(x, y)
+            logger.draw(monitor_debug)
+        else
+            os.cancelTimer(TIMER)
+            runCycle()
+            current_run = TIME_BETWEEN_SCANS
+            displayTimer(monitor_main, current_run)
+            TIMER = os.startTimer(1)
+        end
     end
 end
