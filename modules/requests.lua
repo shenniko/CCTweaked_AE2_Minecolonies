@@ -1,16 +1,18 @@
--- Version: 1.6
--- requests.lua - Display colony requests in a clean table using paintutils
+-- Version: 1.7
+-- requests.lua - Display colony requests in a clean table using paintutils + display helpers
 
 local display = require("modules.display")
 local colony = require("modules.colony")
 
 local requests = {}
 
+-- Format raw item string into something human-readable
 local function formatItemName(raw)
     local name = raw:match(":(.+)") or raw
     return name:gsub("_", " ")
 end
 
+-- Split role and name from colony target string
 local function splitRoleAndName(target)
     if not target or target == "" then return "Unknown", "Unknown" end
     local words = {}
@@ -22,10 +24,22 @@ local function splitRoleAndName(target)
 end
 
 function requests.drawRequests(mon, colonyPeripheral)
+    local list = {}
+
+    -- Try to get colony data safely
+    local ok, result = pcall(colony.getWorkRequests, colonyPeripheral)
+    if ok and type(result) == "table" then
+        list = result
+    else
+        display.clear(mon)
+        display.printHeader(mon, "MineColonies Work Requests")
+        display.printLine(mon, 3, "Error: Unable to get requests.", colors.red)
+        return
+    end
+
     display.clear(mon)
     display.printHeader(mon, "MineColonies Work Requests")
 
-    local list = colony.getWorkRequests(colonyPeripheral)
     local w, h = mon.getSize()
     local row = 3
 
@@ -34,35 +48,30 @@ function requests.drawRequests(mon, colonyPeripheral)
         return
     end
 
-    -- Column widths
+    -- Define columns
     local qtyW = 5
     local itemW = 30
     local jobW = 12
     local nameW = w - (qtyW + itemW + jobW + 6)
 
-    -- Column positions
     local qtyX = 2
     local itemX = qtyX + qtyW + 1
     local jobX = itemX + itemW + 1
     local nameX = jobX + jobW + 1
 
-    -- Headers
-    mon.setCursorPos(qtyX, row)
-    mon.setTextColor(colors.lightGray)
-    mon.write("Qty")
-    mon.setCursorPos(itemX, row)
-    mon.write("Item")
-    mon.setCursorPos(jobX, row)
-    mon.write("Job")
-    mon.setCursorPos(nameX, row)
-    mon.write("Colonist")
+    -- Draw headers
+    display.drawTableHeaders(mon, row, {
+        { x = qtyX,  label = "Qty" },
+        { x = itemX, label = "Item" },
+        { x = jobX,  label = "Job" },
+        { x = nameX, label = "Colonist" }
+    })
 
-    -- Header underline
     row = row + 1
-    paintutils.drawLine(1, row, w, row, colors.gray)
+    display.drawHorizontalLine(mon, row)
     row = row + 1
 
-    -- Print each request
+    -- Print each request row
     for _, req in ipairs(list) do
         local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
         local count = req.count or 1
