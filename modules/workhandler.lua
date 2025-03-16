@@ -9,6 +9,7 @@ local meutils = require("modules.meutils")
 local filter = require("modules.requestFilter")
 local peripherals = require("modules.peripherals")
 
+-- Extract last two words from the request target (typically the name)
 local function extractNameFromTarget(target)
     local words = {}
     for word in target:gmatch("%S+") do table.insert(words, word) end
@@ -18,16 +19,27 @@ local function extractNameFromTarget(target)
     return target
 end
 
+-- Match L. Haddock to Lucy Haddock, using fuzzy logic
 local function getColonistJobByTarget(colonists, target)
-    local name = extractNameFromTarget(target)
+    local shortName = extractNameFromTarget(target)
+
     for _, c in ipairs(colonists or {}) do
-        if c.name == name then
-            return c.job or target
+        local fullName = c.name
+        local first, last = fullName:match("^(%a)[^ ]* (%a[^ ]*)")  -- "Lucy Haddock" → L, Haddock
+        if first and last then
+            local pattern1 = first .. "%. " .. last                -- "L. Haddock"
+            local pattern2 = last                                  -- fallback if only last name matches
+
+            if shortName:find(pattern1) or shortName:find(pattern2) then
+                return c.job or "Unknown"
+            end
         end
     end
-    return target
+
+    return "Unknown"
 end
 
+-- Main display and scan logic
 function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
     local colony = peripherals.getColonyIntegrator()
     if not colony then
@@ -90,10 +102,10 @@ function workhandler.scanAndDisplay(mon, storageSide, screenHeight, colonists)
             logger.add("[Skipped] Malformed request", colors.red)
         end
 
-        sleep(0.05)
+        sleep(0.05) -- prevent lag
     end
 
-    -- Render Work Table
+    -- === Render ===
     local row = 2
     mon.clear()
     display.mPrintRowJustified(mon, 1, "center", "MineColonies Work Requests", colors.white)
