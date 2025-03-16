@@ -86,7 +86,7 @@ local function drawLowerBoxes(mon, citizens, buildings, topRow)
 
     -- Add color key legend above boxes
     display.mPrintRowJustified(mon, topRow - 1, "center",
-        "Key: ✔ Provided (green) | ↝ Scheduled (orange) | ↻ Crafting (yellow) | ✖ Failed (red) | ● Skipped (gray)", colors.white)
+        "Key: Provided (green)|Scheduled (orange)|Crafting (yellow)|Failed (red)|Skipped (gray)", colors.white)
 
     local y1, y2 = topRow + 1, topRow + 1
 
