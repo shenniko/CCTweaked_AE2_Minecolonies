@@ -1,12 +1,11 @@
--- startup.lua - Auto-updater and launcher for ME Warehouse Dashboard (ATM10)
--- Pulls latest files from GitHub and runs the main dashboard
+-- startup.lua - Auto-updater and launcher for ME Dashboard
 
 local REPO = "shenniko/CCTweaked_AE2_Minecolonies"
-local BRANCH = "main"  -- Change to "master" or another branch if needed
+local BRANCH = "main"
 
--- Files to download from the GitHub repository
+-- Files to download from GitHub
 local FILES = {
-    -- Main dashboard
+    -- Core
     { path = "dashboard.lua", target = "dashboard.lua" },
 
     -- Modules
@@ -16,8 +15,9 @@ local FILES = {
     { path = "modules/meutils.lua", target = "modules/meutils.lua" },
     { path = "modules/workhandler.lua", target = "modules/workhandler.lua" },
     { path = "modules/requestFilter.lua", target = "modules/requestFilter.lua" },
+    { path = "modules/peripherals.lua", target = "modules/peripherals.lua" },
 
-    -- Config file
+    -- Config
     { path = "modules/config.lua", target = "modules/config.lua" }
 }
 
@@ -30,31 +30,32 @@ local function downloadFile(path, target)
         local content = response.readAll()
         response.close()
 
-        -- Ensure folder exists
         if target:find("/") then
             local dir = target:match("^(.*)/")
-            if not fs.exists(dir) then fs.makeDir(dir) end
+            if dir and not fs.exists(dir) then
+                fs.makeDir(dir)
+            end
         end
 
         local file = fs.open(target, "w")
         file.write(content)
         file.close()
-        print("[✓] Saved: " .. target)
+        print("[✓] Saved as " .. target)
         return true
     else
-        print("[X] Failed to download: " .. path)
+        print("[X] Failed to download " .. path)
         return false
     end
 end
 
--- Pull all required files
+-- Update all files
 local function updateAll()
     for _, file in ipairs(FILES) do
         downloadFile(file.path, file.target)
     end
 end
 
--- Run the dashboard
+-- Run the main dashboard
 local function runDashboard()
     if fs.exists("dashboard.lua") then
         shell.run("dashboard.lua")
@@ -63,6 +64,6 @@ local function runDashboard()
     end
 end
 
--- 🚀 Execute update and launch
+-- Run it!
 updateAll()
 runDashboard()
