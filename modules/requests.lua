@@ -38,16 +38,15 @@ function requests.drawRequests(mon, colonyPeripheral)
 
     local w, h = mon.getSize()
     local boxX1, boxY1, boxX2, boxY2 = 1, 1, w, h
-    display.drawTitledBox(mon, boxX1, boxY1, boxX2, boxY2, "MineColonies Work Requests", colors.gray, colors.black, colors.cyan)
+    display.drawFancyBox(mon, boxX1, boxY1, boxX2, boxY2, "  MineColonies Work Requests  ", colors.gray)
 
     local row = boxY1 + 2
 
     if #list == 0 then
-        display.printLine(mon, row, "No active work requests", colors.gray)
+        display.printLine(mon, row, "  No active work requests  ", colors.gray)
         return
     end
 
-    -- Define columns
     local qtyW = 5
     local itemW = 30
     local jobW = 12
@@ -58,7 +57,6 @@ function requests.drawRequests(mon, colonyPeripheral)
     local jobX = itemX + itemW + 1
     local nameX = jobX + jobW + 1
 
-    -- Draw headers
     mon.setCursorPos(qtyX, row)
     mon.setTextColor(colors.lightGray)
     mon.write("Qty")
@@ -71,21 +69,22 @@ function requests.drawRequests(mon, colonyPeripheral)
 
     row = row + 1
     mon.setCursorPos(qtyX, row)
-    mon.write(string.rep("-", w - 4)) -- fixed to avoid border collision
+    mon.setTextColor(colors.gray)
+    mon.write(string.rep("-", w - 4))
     row = row + 1
 
     for _, req in ipairs(list) do
         local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
         local count = req.count or 1
         local job, name = splitRoleAndName(req.target or "")
-        local niceName = formatItemName(item):gsub("^%s+", "")
+        local niceName = formatItemName(item)
 
         mon.setCursorPos(qtyX, row)
         mon.setTextColor(colors.yellow)
         mon.write(string.format("%-4s", count .. "x"))
 
         mon.setCursorPos(itemX, row)
-        mon.write(niceName:sub(1, itemW))
+        mon.write(niceName:sub(1, itemW):gsub("^%s+", ""))  -- Trim left spaces
 
         mon.setCursorPos(jobX, row)
         mon.write(job:sub(1, jobW))
