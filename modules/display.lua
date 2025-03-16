@@ -29,4 +29,20 @@ function display.drawHorizontalLine(mon, y, color)
     local success = pcall(function()
         paintutils.drawLine(1, y, w, y, color or colors.gray)
     end)
-    if not
+    if not success then
+        mon.setCursorPos(1, y)
+        mon.setTextColor(color or colors.gray)
+        mon.write(string.rep("-", w))
+    end
+end
+
+-- Optional: For requests, draw column headers
+function display.drawTableHeaders(mon, row, columns)
+    mon.setTextColor(colors.lightGray)
+    for _, col in ipairs(columns) do
+        mon.setCursorPos(col.x, row)
+        mon.write(col.label)
+    end
+end
+
+return display
