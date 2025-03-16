@@ -34,7 +34,7 @@ local function drawRequestList(mon, list, x1, y1, x2, y2, title)
     local spacing = 2
 
     local w = x2 - x1 + 1
-    local itemW = w - (qtyW + statusW + jobW + colonistW + spacing * 4)
+    local itemW = w - (qtyW + statusW + jobW + colonistW + spacing * 5 + 2)
 
     local qtyX = x1 + 2
     local itemX = qtyX + qtyW + spacing
