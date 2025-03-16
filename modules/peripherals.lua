@@ -1,21 +1,30 @@
--- peripherals.lua - Safe Peripheral Management
+-- peripherals.lua - Safe Peripheral Management Layer
 
 local peripherals = {}
+local config = require("modules.config")
 
--- Wrapper to safely find a peripheral every time
-local function safeFind(peripheralType)
-    local success, result = pcall(function() return peripheral.find(peripheralType) end)
-    return success and result or nil
+-- Monitor wrappers
+function peripherals.getMainMonitor()
+    return peripheral.wrap(config.MONITOR_MAIN)
 end
 
--- Gets peripherals dynamically
-function peripherals.getMEBridge() return safeFind("meBridge") end
-function peripherals.getColonyIntegrator() return safeFind("colonyIntegrator") end
-function peripherals.getMonitor(name) return peripheral.wrap(name) end
+function peripherals.getDebugMonitor()
+    return peripheral.wrap(config.MONITOR_DEBUG)
+end
 
--- Checks if a peripheral is available
-function peripherals.isValid(peripheralObj)
-    return peripheralObj ~= nil
+-- Dynamic safety-wrapped peripherals
+function peripherals.getMEBridge()
+    local success, bridge = pcall(function()
+        return peripheral.find("meBridge")
+    end)
+    return success and bridge or nil
+end
+
+function peripherals.getColonyIntegrator()
+    local success, colony = pcall(function()
+        return peripheral.find("colonyIntegrator")
+    end)
+    return success and colony or nil
 end
 
 return peripherals
