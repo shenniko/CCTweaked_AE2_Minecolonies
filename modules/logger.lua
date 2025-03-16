@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- logger.lua
 -- Handles debug log storage, scrolling, and rendering to a monitor.
 
