@@ -76,4 +76,15 @@ function colony.getConstructionStatus(colonyPeripheral)
     return result
 end
 
+function colony.extractTargetName(target)
+    local words = {}
+    for word in target:gmatch("%S+") do
+        table.insert(words, word)
+    end
+    if #words >= 2 then
+        return words[#words - 1] .. " " .. words[#words]
+    end
+    return target
+end
+
 return colony
