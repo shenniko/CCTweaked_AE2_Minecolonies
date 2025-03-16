@@ -1,3 +1,4 @@
+-- Version: 1.0
 -- meutils.lua - Crash-safe ME Bridge utility functions
 
 local meutils = {}
