@@ -4,7 +4,7 @@
 local logger = {
     log = {},           -- Stores log entries
     scroll_offset = 0,  -- For scroll support (future feature)
-    max_entries = require("config").DEBUG_LOG_LIMIT   -- Max log entries to keep in memory
+    max_entries = require("modules.config").DEBUG_LOG_LIMIT   -- Max log entries to keep in memory
 }
 
 -- Add a new entry to the log
