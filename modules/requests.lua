@@ -1,18 +1,16 @@
--- Version: 1.5
--- requests.lua - Display colony requests using paintutils for table layout
+-- Version: 1.6
+-- requests.lua - Display colony requests in a clean table using paintutils
 
 local display = require("modules.display")
 local colony = require("modules.colony")
 
 local requests = {}
 
--- Function to format item names by removing mod prefixes and replacing underscores
 local function formatItemName(raw)
     local name = raw:match(":(.+)") or raw
     return name:gsub("_", " ")
 end
 
--- Function to split the role and name from the target string
 local function splitRoleAndName(target)
     if not target or target == "" then return "Unknown", "Unknown" end
     local words = {}
@@ -23,7 +21,6 @@ local function splitRoleAndName(target)
     return job, name
 end
 
--- Main function to draw the requests table
 function requests.drawRequests(mon, colonyPeripheral)
     display.clear(mon)
     display.printHeader(mon, "MineColonies Work Requests")
@@ -37,68 +34,57 @@ function requests.drawRequests(mon, colonyPeripheral)
         return
     end
 
-    -- Define column widths
+    -- Column widths
     local qtyW = 5
-    local itemW = 20
+    local itemW = 30
     local jobW = 12
-    local nameW = 15
-    local spacing = 1
+    local nameW = w - (qtyW + itemW + jobW + 6)
 
-    -- Calculate starting positions of each column
-    local qtyCol = 2
-    local itemCol = qtyCol + qtyW + spacing
-    local jobCol = itemCol + itemW + spacing
-    local nameCol = jobCol + jobW + spacing
+    -- Column positions
+    local qtyX = 2
+    local itemX = qtyX + qtyW + 1
+    local jobX = itemX + itemW + 1
+    local nameX = jobX + jobW + 1
 
-    -- Function to draw horizontal lines
-    local function drawHorizontalLine(y)
-        paintutils.drawLine(1, y, w, y, colors.gray)
-    end
-
-    -- Draw header
-    mon.setCursorPos(qtyCol, row)
+    -- Headers
+    mon.setCursorPos(qtyX, row)
     mon.setTextColor(colors.lightGray)
     mon.write("Qty")
-    mon.setCursorPos(itemCol, row)
+    mon.setCursorPos(itemX, row)
     mon.write("Item")
-    mon.setCursorPos(jobCol, row)
+    mon.setCursorPos(jobX, row)
     mon.write("Job")
-    mon.setCursorPos(nameCol, row)
+    mon.setCursorPos(nameX, row)
     mon.write("Colonist")
+
+    -- Header underline
+    row = row + 1
+    paintutils.drawLine(1, row, w, row, colors.gray)
     row = row + 1
 
-    -- Draw header separator
-    drawHorizontalLine(row)
-    row = row + 1
-
-    -- Iterate through the list of requests and display each
+    -- Print each request
     for _, req in ipairs(list) do
         local item = req.items[1] and (req.items[1].displayName or req.items[1].name) or "?"
         local count = req.count or 1
-        local rawTarget = req.target or "Unknown"
-        local job, name = splitRoleAndName(rawTarget)
+        local job, name = splitRoleAndName(req.target or "")
         local niceName = formatItemName(item)
 
-        -- Write each column
-        mon.setCursorPos(qtyCol, row)
+        mon.setCursorPos(qtyX, row)
         mon.setTextColor(colors.yellow)
-        mon.write(string.format("%-" .. qtyW .. "s", count .. "x"))
+        mon.write(string.format("%-4s", count .. "x"))
 
-        mon.setCursorPos(itemCol, row)
+        mon.setCursorPos(itemX, row)
         mon.write(niceName:sub(1, itemW))
 
-        mon.setCursorPos(jobCol, row)
-        mon.write(string.format("%-" .. jobW .. "s", job))
+        mon.setCursorPos(jobX, row)
+        mon.write(job:sub(1, jobW))
 
-        mon.setCursorPos(nameCol, row)
+        mon.setCursorPos(nameX, row)
         mon.write(name:sub(1, nameW))
 
         row = row + 1
-        if row > h then break end
+        if row >= h then break end
     end
-
-    -- Draw bottom border
-    drawHorizontalLine(row)
 end
 
 return requests
