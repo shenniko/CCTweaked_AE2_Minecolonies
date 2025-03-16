@@ -1,4 +1,4 @@
--- Version: 1.16
+-- Version: 1.17
 -- colony.lua - Handles data gathering from the colony peripheral
 
 local colony = {}
@@ -28,7 +28,6 @@ function colony.getColonyStatus(colonyPeripheral)
             health = c.health,
             saturation = c.saturation,
             happiness = c.happiness,
-            -- Prefer work.name (building name), then fallback to job name
             job = (c.work and cleanName(c.work.name))
                 or (c.job and cleanName(c.job.name))
                 or "Unemployed",
@@ -52,7 +51,14 @@ function colony.getConstructionStatus(colonyPeripheral)
             local builderName = c.name
             local work = c.work
             local buildingName = cleanName(work.name or "Unknown")
-            local task = cleanName(work.description or work.job or "Working")
+            local rawTask = work.description or work.job or "Working"
+            local task = cleanName(rawTask)
+
+            -- Prevent duplicate builder name in task
+            if task == builderName then
+                task = "builder"
+            end
+
             local step = work.step and (" [Step " .. work.step .. "]") or ""
             local level = work.level and (" (Level " .. work.level .. ")") or ""
 
