@@ -1,6 +1,5 @@
 -- workhandler.lua
--- Scans colony requests, attempts to fulfill via ME,
--- and categorizes for UI display
+-- Processes colony requests and interacts with ME system
 
 local workhandler = {}
 
@@ -8,67 +7,60 @@ local logger = require("modules.logger")
 local colonyUtil = require("modules.colony")
 local display = require("modules.display")
 local meutils = require("modules.meutils")
+local filter = require("modules.requestFilter")
 
--- Process all work requests and render categorized summary
+-- Main scan and render logic
 function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide, screenHeight)
-    -- Setup categories
-    local builder_list, nonbuilder_list, equipment_list = {}, {}, {}
+    local builder_list, nonbuilder_list, equipment_list = {}
 
-    -- Build item lookup table
-    local items = meBridge.listItems()
-    local itemMap = meutils.buildItemLookup(items)
+    -- Build a lookup of current ME system contents
+    local itemMap = meutils.getItemMap(meBridge)
     local workRequests = colonyPeripheral.getRequests()
 
     for _, request in ipairs(workRequests) do
-        local name = request.name
-        local item = request.items[1].name
-        local desc = request.desc
+        local itemName = request.items[1].name
+        local target = colonyUtil.extractTargetName(request.target)
         local count = request.count
         local provided = 0
-        local target = colonyUtil.extractTargetName(request.target)
         local color = colors.blue
 
-        local useME = meutils.shouldUseME(item, desc)
-
-        if useME then
-            -- Try exporting item
-            if itemMap[item] then
-                provided = meutils.exportItem(meBridge, item, count, storageSide)
-            end
-
-            -- Try crafting if not enough provided
-            if provided < count then
-                if meBridge.isItemCrafting({ name = item }) then
-                    color = colors.yellow
-                    logger.add("[Crafting] " .. item, colors.yellow)
-                elseif meutils.tryCraft(meBridge, item, count) then
-                    color = colors.orange
-                    logger.add("[Scheduled] " .. count .. " x " .. item, colors.orange)
-                else
-                    color = colors.red
-                    logger.add("[Failed] " .. item, colors.red)
-                end
-            else
-                color = colors.lime
-                logger.add("[Provided] " .. count .. " x " .. item, colors.lime)
-            end
-        else
+        -- Skip logic
+        if filter.shouldSkip(request) then
+            logger.add("[Skipped] " .. request.name .. " [" .. target .. "]", colors.gray)
             color = colors.gray
-            logger.add("[Skipped] " .. name .. " [" .. target .. "]", colors.gray)
+        else
+            -- Try to export
+            local canExport = false
+            canExport, _ = meutils.canExport(itemMap, itemName, count)
+
+            if canExport then
+                provided = meutils.tryExport(meBridge, itemName, count, storageSide)
+                color = colors.lime
+                logger.add("[Provided] " .. count .. " x " .. itemName, colors.lime)
+            elseif meutils.isCrafting(meBridge, itemName) then
+                color = colors.yellow
+                logger.add("[Crafting] " .. itemName, colors.yellow)
+            elseif meutils.startCraft(meBridge, itemName, count) then
+                color = colors.orange
+                logger.add("[Scheduled] " .. count .. " x " .. itemName, colors.orange)
+            else
+                color = colors.red
+                logger.add("[Failed] " .. itemName, colors.red)
+            end
         end
 
         -- Create UI entry
         local entry = {
-            name = name,
-            item = item,
+            name = request.name,
+            item = itemName,
             target = target,
             needed = count,
             provided = provided,
             color = color
         }
 
-        -- Categorize
-        if desc:find("of class") then
+        -- Categorize entry
+        if request.desc:find("of class") then
             table.insert(equipment_list, entry)
         elseif target:find("Builder") then
             table.insert(builder_list, entry)
@@ -77,7 +69,7 @@ function workhandler.scanAndDisplay(mon, colonyPeripheral, meBridge, storageSide
         end
     end
 
-    -- Render UI summary
+    -- Render to monitor
     local row = 2
     mon.clear()
     display.mPrintRowJustified(mon, 1, "center", "MineColonies Work Requests", colors.white)
